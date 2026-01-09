@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RunStrava Modular</title>
+    <title>RunStrava Pro</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="style.css">
@@ -34,10 +34,13 @@
         <div class="tracker-controls-container">
             <div id="gps-status">GPS Ready</div>
             <div class="timer-display" id="timer">00:00:00</div>
+            
             <div class="stat-grid" style="margin-bottom:20px;">
                 <div><div class="stat-value" id="live-dist">0.00</div><div class="stat-label">km</div></div>
                 <div><div class="stat-value" id="live-pace">--:--</div><div class="stat-label">pace</div></div>
+                <div><div class="stat-value" id="live-elev">0</div><div class="stat-label">elev (m)</div></div>
             </div>
+
             <div class="controls">
                 <button id="start-btn" class="circle-btn btn-start" onclick="startRun()">START</button>
                 <button id="stop-btn" class="circle-btn btn-stop" onclick="pauseRun()">STOP</button>
@@ -111,6 +114,10 @@
             <span onclick="document.getElementById('map-modal').style.display='none'" class="close-btn">✕</span>
         </div>
         <div id="history-map" style="flex:1; width:100%;"></div>
+        
+        <div style="padding:15px; background:white; border-top:1px solid #ddd;">
+             <button onclick="exportGPX()" class="btn-full" style="margin:0; background:#333;">⬇ Export GPX File</button>
+        </div>
     </div>
 
     <nav>

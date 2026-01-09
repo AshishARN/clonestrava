@@ -8,9 +8,14 @@ let profile = JSON.parse(localStorage.getItem('strava_profile_v3')) || {
 
 // Runtime variables
 let timerInterval, totalSeconds = 0, isRunning = false;
-let watchId = null, mapInstance = null, polyline = null, pathCoordinates = [], totalDistance = 0;
+let watchId = null, mapInstance = null, polyline = null;
+let pathCoordinates = []; // Format: [lat, lng, alt, time]
+let totalDistance = 0; // km
+let elevationGain = 0; // meters
+let lastAltitude = null;
 let historyMapInstance = null;
 let isManualEntry = false;
+let currentRunIdForExport = null;
 
 // --- Initialization ---
 window.onload = function() {
@@ -71,19 +76,33 @@ function startRun() {
         (pos) => {
             const lat = pos.coords.latitude;
             const lng = pos.coords.longitude;
-            document.getElementById('gps-status').innerText = `Recording (±${Math.round(pos.coords.accuracy)}m)`;
+            const alt = pos.coords.altitude || 0;
+            const accuracy = pos.coords.accuracy;
+
+            document.getElementById('gps-status').innerText = `Recording (±${Math.round(accuracy)}m)`;
             
             if (pathCoordinates.length > 0) {
                 const last = pathCoordinates[pathCoordinates.length-1];
                 const dist = calcDist(last[0], last[1], lat, lng);
-                // Filter small movements (< 5 meters)
+                
+                // Filter small movements (noise) < 5 meters
                 if (dist > 0.005) { 
                     totalDistance += dist; 
-                    pathCoordinates.push([lat, lng]); 
+                    
+                    // Elevation Logic (Only add positive gain)
+                    if (lastAltitude !== null && alt > lastAltitude) {
+                        elevationGain += (alt - lastAltitude);
+                    }
+                    lastAltitude = alt;
+
+                    // Push [Lat, Lng, Alt, Time]
+                    pathCoordinates.push([lat, lng, alt, new Date().toISOString()]); 
                     updateMapLine(); 
                 }
             } else {
-                pathCoordinates.push([lat, lng]); 
+                // First point
+                pathCoordinates.push([lat, lng, alt, new Date().toISOString()]);
+                lastAltitude = alt;
                 mapInstance.setView([lat, lng], 16);
                 L.circleMarker([lat, lng], {radius: 6, color: 'green', fillOpacity: 1}).addTo(mapInstance);
             }
@@ -98,8 +117,10 @@ function startRun() {
 
 function updateMapLine() { 
     if(polyline) { 
-        polyline.setLatLngs(pathCoordinates); 
-        mapInstance.setView(pathCoordinates[pathCoordinates.length-1]); 
+        // Leaflet only needs [lat, lng], map our 4-point array to 2-point
+        const simplePath = pathCoordinates.map(p => [p[0], p[1]]);
+        polyline.setLatLngs(simplePath); 
+        mapInstance.setView(simplePath[simplePath.length-1]); 
     }
 }
 
@@ -116,6 +137,7 @@ function resumeRun() { startRun(); }
 function updateDashboard() {
     document.getElementById('timer').innerText = formatTime(totalSeconds);
     document.getElementById('live-dist').innerText = totalDistance.toFixed(2);
+    document.getElementById('live-elev').innerText = Math.round(elevationGain); // Show elevation
     if(totalDistance > 0.05) {
         document.getElementById('live-pace').innerText = formatTime(totalSeconds/totalDistance, true);
     }
@@ -191,6 +213,7 @@ function confirmSave() {
         date: new Date().toISOString(),
         distance: dist,
         seconds: secs,
+        elevation: elevationGain,
         shoeId: shoeId,
         path: isManualEntry ? [] : pathCoordinates
     };
@@ -212,14 +235,19 @@ function confirmSave() {
 }
 
 function resetTracker() {
-    totalSeconds = 0; totalDistance = 0; pathCoordinates = []; isRunning = false;
+    totalSeconds = 0; totalDistance = 0; elevationGain = 0; lastAltitude = null;
+    pathCoordinates = []; isRunning = false;
+    
     clearInterval(timerInterval); navigator.geolocation.clearWatch(watchId);
     if(mapInstance) { mapInstance.remove(); mapInstance = null; }
+    
     toggleButtons('idle');
     updateDashboard();
+    
     document.getElementById('timer').innerText = "00:00:00";
     document.getElementById('live-dist').innerText = "0.00";
     document.getElementById('live-pace').innerText = "--:--";
+    document.getElementById('live-elev').innerText = "0";
 }
 
 // --- Profile & UI ---
@@ -284,6 +312,7 @@ function renderFeed() {
         const date = new Date(run.date).toLocaleDateString('en-US', {month:'short', day:'numeric'});
         const shoeName = profile.gear.find(g => g.id === run.shoeId)?.name || "";
         const hasMap = run.path && run.path.length > 0;
+        const elev = run.elevation ? Math.round(run.elevation) : 0;
         
         let html = `
         <div class="activity">
@@ -303,6 +332,8 @@ function renderFeed() {
                 <div class="run-stat"><label>Pace</label>${formatTime(run.seconds/run.distance, true)} /km</div>
                 <div class="run-stat"><label>Time</label>${formatTime(run.seconds)}</div>
             </div>
+            ${elev > 0 ? `<div style="font-size:0.8rem; color:gray; margin-top:5px;">Elevation: ${elev}m</div>` : ''}
+            
             ${shoeName ? `<span class="shoe-tag">👟 ${shoeName}</span>` : ''}
             ${hasMap ? `<button class="btn-map" onclick="viewMap(${run.id})">🗺️ View Map</button>` : ''}
         </div>`;
@@ -311,15 +342,60 @@ function renderFeed() {
 }
 
 function viewMap(id) {
+    currentRunIdForExport = id;
     const run = runs.find(r => r.id === id);
     document.getElementById('map-modal').style.display = 'flex';
     setTimeout(() => {
         if(historyMapInstance) historyMapInstance.remove();
         historyMapInstance = L.map('history-map');
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(historyMapInstance);
-        const line = L.polyline(run.path, {color:'#fc4c02', weight:5}).addTo(historyMapInstance);
+        
+        // Map 4-point data [lat, lng, alt, time] back to 2-point [lat, lng] for Leaflet display
+        const simplePath = run.path.map(p => [p[0], p[1]]);
+        
+        const line = L.polyline(simplePath, {color:'#fc4c02', weight:5}).addTo(historyMapInstance);
         historyMapInstance.fitBounds(line.getBounds());
     }, 100);
+}
+
+// --- EXPORT GPX ---
+function exportGPX() {
+    if(!currentRunIdForExport) return;
+    const run = runs.find(r => r.id === currentRunIdForExport);
+    if(!run || !run.path || run.path.length === 0) return alert("No GPS data for this run.");
+
+    let gpx = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="RunStrava" xmlns="http://www.topografix.com/GPX/1/1">
+ <trk>
+  <name>${run.title}</name>
+  <trkseg>`;
+
+    run.path.forEach(pt => {
+        const lat = pt[0];
+        const lng = pt[1];
+        const ele = pt[2] || 0;
+        const time = pt[3] || new Date().toISOString();
+
+        gpx += `
+   <trkpt lat="${lat}" lon="${lng}">
+    <ele>${ele}</ele>
+    <time>${time}</time>
+   </trkpt>`;
+    });
+
+    gpx += `
+  </trkseg>
+ </trk>
+</gpx>`;
+
+    const blob = new Blob([gpx], { type: 'application/gpx+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `runstrava_${run.id}.gpx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 }
 
 // --- Helpers ---
