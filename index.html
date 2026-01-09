@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RunStrava Pro</title>
+    <title>RunStrava Ultra</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
     <style>
         :root {
             --primary: #fc4c02;
@@ -36,17 +39,17 @@
             border-bottom: 1px solid #ddd;
             position: sticky;
             top: 0;
-            z-index: 100;
+            z-index: 1000;
         }
 
         header h1 {
             color: var(--primary);
             font-size: 1.5rem;
             font-weight: 800;
-            letter-spacing: -0.5px;
+            font-style: italic;
         }
 
-        /* --- Main Content Area --- */
+        /* --- Main Content --- */
         main {
             flex: 1;
             overflow-y: auto;
@@ -54,7 +57,6 @@
             padding-bottom: 80px; 
         }
 
-        /* --- Cards --- */
         .card {
             background: var(--light);
             border-radius: 8px;
@@ -63,22 +65,15 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
+        /* --- Stats Grid --- */
         .stat-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 10px;
             text-align: center;
         }
-
-        .stat-value {
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
-
-        .stat-label {
-            font-size: 0.8rem;
-            color: var(--text-gray);
-        }
+        .stat-value { font-size: 1.2rem; font-weight: bold; }
+        .stat-label { font-size: 0.8rem; color: var(--text-gray); }
 
         /* --- Activity Feed --- */
         .activity {
@@ -86,294 +81,210 @@
             padding-bottom: 15px;
             margin-bottom: 15px;
         }
+        .activity:last-child { border: none; margin: 0; }
         
-        .activity:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-        }
-
-        .user-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
+        .user-header { display: flex; align-items: center; margin-bottom: 10px; }
         .avatar {
-            width: 40px;
-            height: 40px;
-            background: var(--dark);
-            border-radius: 50%;
-            margin-right: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
+            width: 40px; height: 40px; background: var(--dark);
+            border-radius: 50%; margin-right: 10px;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: bold;
         }
-
-        .activity-meta h3 {
-            font-size: 0.95rem;
-        }
-        
-        .activity-meta span {
-            font-size: 0.75rem;
-            color: var(--text-gray);
-        }
+        .activity-meta h3 { font-size: 0.95rem; }
+        .activity-meta span { font-size: 0.75rem; color: var(--text-gray); }
 
         .run-stats {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 10px;
+            display: flex; justify-content: space-between; margin-top: 10px;
         }
+        .run-stat div { font-size: 1.1rem; font-weight: 600; }
+        .run-stat label { font-size: 0.75rem; color: var(--text-gray); display: block; }
 
-        .run-stat div {
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
-        
-        .run-stat label {
-            font-size: 0.75rem;
-            color: var(--text-gray);
-            display: block;
+        .btn-map {
+            margin-top: 15px;
+            width: 100%;
+            padding: 8px;
+            background: white;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
         }
 
         /* --- Tracker UI --- */
         #tracker-view {
             display: none;
-            text-align: center;
-            height: 100%;
-            justify-content: center;
             flex-direction: column;
+            height: 100%;
+            background: white;
+        }
+
+        /* The Live Map */
+        #live-map {
+            flex: 1;
+            width: 100%;
+            background: #eee;
+        }
+
+        .tracker-controls-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #ddd;
+            z-index: 500;
         }
 
         .timer-display {
-            font-size: 4rem;
+            font-size: 3.5rem;
             font-weight: 200;
+            text-align: center;
             font-variant-numeric: tabular-nums;
-            margin: 20px 0;
-        }
-
-        .gps-status {
-            font-size: 0.8rem;
-            color: var(--text-gray);
-            margin-bottom: 10px;
+            margin-bottom: 15px;
         }
 
         .tracker-stats {
             display: flex;
             justify-content: space-around;
-            margin-bottom: 40px;
+            text-align: center;
+            margin-bottom: 20px;
         }
 
+        /* Buttons */
         .circle-btn {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            border: none;
-            color: white;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.1s;
+            width: 70px; height: 70px;
+            border-radius: 50%; border: none;
+            color: white; font-size: 0.9rem; font-weight: bold;
+            cursor: pointer; transition: transform 0.1s;
         }
-
         .circle-btn:active { transform: scale(0.95); }
         .btn-start { background: var(--primary); }
         .btn-stop { background: var(--dark); }
         .btn-resume { background: #4CAF50; }
         .btn-finish { background: #E91E63; }
+        
+        .controls { display: flex; gap: 20px; justify-content: center; }
 
-        .controls {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-        }
-
-        /* --- Modal --- */
-        .fab {
-            position: fixed;
-            bottom: 80px;
-            right: 20px;
-            background: var(--primary);
-            color: white;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            box-shadow: 0 4px 10px rgba(252, 76, 2, 0.4);
-            cursor: pointer;
-        }
-
-        .modal {
+        /* --- Full Screen Map Modal --- */
+        .map-modal {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            align-items: center;
-            justify-content: center;
-            z-index: 200;
-        }
-
-        .modal-content {
             background: white;
-            padding: 20px;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 400px;
+            z-index: 2000;
+            flex-direction: column;
+        }
+        
+        #history-map {
+            flex: 1;
+            width: 100%;
         }
 
-        input {
-            width: 100%;
-            padding: 10px;
-            margin: 5px 0 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-
-        button.full-width {
-            width: 100%;
-            padding: 12px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        /* --- Navigation --- */
-        nav {
-            position: fixed;
-            bottom: 0;
-            width: 100%;
+        .modal-header {
+            padding: 15px;
             background: var(--light);
             display: flex;
-            justify-content: space-around;
-            padding: 10px 0;
-            border-top: 1px solid #ddd;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
         }
-
-        .nav-item {
-            text-align: center;
-            color: var(--text-gray);
-            font-size: 0.7rem;
-            cursor: pointer;
-        }
-
-        .nav-item.active {
-            color: var(--primary);
-        }
-
-        .nav-icon {
+        
+        .close-btn {
             font-size: 1.5rem;
-            display: block;
-            margin-bottom: 2px;
+            cursor: pointer;
+            padding: 5px;
         }
+
+        /* --- Navbar --- */
+        nav {
+            position: fixed; bottom: 0; width: 100%;
+            background: var(--light);
+            display: flex; justify-content: space-around;
+            padding: 10px 0; border-top: 1px solid #ddd;
+            z-index: 1000;
+        }
+        .nav-item { text-align: center; color: var(--text-gray); font-size: 0.7rem; cursor: pointer; }
+        .nav-item.active { color: var(--primary); }
+        .nav-icon { font-size: 1.5rem; display: block; margin-bottom: 2px; }
 
     </style>
 </head>
 <body>
 
     <header>
-        <h1>RunStrava Pro</h1>
+        <h1>RunStrava Ultra</h1>
     </header>
 
     <main id="home-view">
         <div class="card">
             <h2 style="font-size: 0.9rem; margin-bottom: 10px; color: var(--text-gray);">THIS WEEK</h2>
             <div class="stat-grid">
-                <div>
-                    <div class="stat-value" id="weekly-km">0.0</div>
-                    <div class="stat-label">km</div>
-                </div>
-                <div>
-                    <div class="stat-value" id="weekly-time">0h 0m</div>
-                    <div class="stat-label">time</div>
-                </div>
-                <div>
-                    <div class="stat-value" id="weekly-runs">0</div>
-                    <div class="stat-label">runs</div>
-                </div>
+                <div><div class="stat-value" id="weekly-km">0.0</div><div class="stat-label">km</div></div>
+                <div><div class="stat-value" id="weekly-time">0h 0m</div><div class="stat-label">time</div></div>
+                <div><div class="stat-value" id="weekly-runs">0</div><div class="stat-label">runs</div></div>
             </div>
         </div>
 
         <h3 style="margin: 20px 0 10px; font-size: 1rem;">Recent Activity</h3>
         <div id="feed-container" class="card">
-            <p style="text-align:center; color:#999; padding:20px;">No runs recorded yet.</p>
-        </div>
+            </div>
     </main>
 
     <div id="tracker-view">
-        <h2 style="color:var(--text-gray); font-weight:normal;">RECORDING</h2>
-        <div class="gps-status" id="gps-status">Waiting for GPS...</div>
-        
-        <div class="timer-display" id="timer">00:00:00</div>
-        
-        <div class="tracker-stats">
-            <div>
-                <div class="stat-value" id="live-dist">0.00</div>
-                <div class="stat-label">Kilometers</div>
+        <div id="live-map"></div> <div class="tracker-controls-container">
+            <div id="gps-status" style="text-align:center; font-size:0.8rem; color:var(--text-gray); margin-bottom:5px;">GPS Ready</div>
+            <div class="timer-display" id="timer">00:00:00</div>
+            
+            <div class="tracker-stats">
+                <div><div class="stat-value" id="live-dist">0.00</div><div class="stat-label">km</div></div>
+                <div><div class="stat-value" id="live-pace">--:--</div><div class="stat-label">avg pace</div></div>
             </div>
-            <div>
-                <div class="stat-value" id="live-pace">0:00</div>
-                <div class="stat-label">Avg Pace</div>
-            </div>
-        </div>
 
-        <div class="controls">
-            <button id="start-btn" class="circle-btn btn-start" onclick="startRun()">START</button>
-            <button id="stop-btn" class="circle-btn btn-stop" onclick="pauseRun()" style="display:none;">STOP</button>
-            <button id="finish-btn" class="circle-btn btn-finish" onclick="finishRun()" style="display:none;">FINISH</button>
-            <button id="resume-btn" class="circle-btn btn-resume" onclick="resumeRun()" style="display:none;">RESUME</button>
+            <div class="controls">
+                <button id="start-btn" class="circle-btn btn-start" onclick="startRun()">START</button>
+                <button id="stop-btn" class="circle-btn btn-stop" onclick="pauseRun()" style="display:none;">STOP</button>
+                <button id="finish-btn" class="circle-btn btn-finish" onclick="finishRun()" style="display:none;">FINISH</button>
+                <button id="resume-btn" class="circle-btn btn-resume" onclick="resumeRun()" style="display:none;">RESUME</button>
+            </div>
         </div>
     </div>
 
-    <div class="fab" id="fab-add" onclick="openModal()">+</div>
-
-    <div id="entry-modal" class="modal">
-        <div class="modal-content">
-            <h3>Manual Entry</h3>
-            <label>Distance (km)</label>
-            <input type="number" id="manual-dist" step="0.01">
-            <label>Time (minutes)</label>
-            <input type="number" id="manual-time">
-            <label>Title</label>
-            <input type="text" id="manual-title" placeholder="Morning Run">
-            <button class="full-width" onclick="saveManualRun()">Save Run</button>
-            <button class="full-width" onclick="closeModal()" style="background:#ddd; color:#333; margin-top:10px;">Cancel</button>
+    <div id="map-modal" class="map-modal">
+        <div class="modal-header">
+            <h3>Route View</h3>
+            <span class="close-btn" onclick="closeMapModal()">✕</span>
         </div>
+        <div id="history-map"></div>
     </div>
 
     <nav>
         <div class="nav-item active" onclick="switchTab('home')">
-            <span class="nav-icon">🏠</span>
-            Home
+            <span class="nav-icon">🏠</span>Home
         </div>
         <div class="nav-item" onclick="switchTab('record')">
-            <span class="nav-icon">◉</span>
-            Record
+            <span class="nav-icon">◉</span>Record
         </div>
         <div class="nav-item" onclick="alert('Profile Coming Soon')">
-            <span class="nav-icon">👤</span>
-            You
+            <span class="nav-icon">👤</span>You
         </div>
     </nav>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <script>
-        // --- State ---
-        let runs = JSON.parse(localStorage.getItem('strava_runs')) || [];
+        // --- State Management ---
+        let runs = JSON.parse(localStorage.getItem('strava_runs_v2')) || [];
         
-        // Tracking Variables
+        // Timer State
         let timerInterval;
-        let seconds = 0;
+        let totalSeconds = 0;
         let isRunning = false;
-        let totalDistance = 0; // in km
+        
+        // GPS & Map State
         let watchId = null;
-        let lastLat = null;
-        let lastLon = null;
+        let mapInstance = null;      // Live map
+        let historyMapInstance = null; // Past run map
+        let polyline = null;         // The red line drawing the path
+        let pathCoordinates = [];    // Array of [lat, lng]
+        let totalDistance = 0;       // km
 
         // --- Init ---
         window.onload = function() {
@@ -383,93 +294,104 @@
 
         // --- Navigation ---
         function switchTab(tab) {
-            const homeView = document.getElementById('home-view');
-            const trackView = document.getElementById('tracker-view');
-            const fab = document.getElementById('fab-add');
+            document.getElementById('home-view').style.display = tab === 'home' ? 'block' : 'none';
+            document.getElementById('tracker-view').style.display = tab === 'record' ? 'flex' : 'none';
+            
             const navItems = document.querySelectorAll('.nav-item');
+            navItems[0].classList.toggle('active', tab === 'home');
+            navItems[1].classList.toggle('active', tab === 'record');
 
-            if (tab === 'home') {
-                homeView.style.display = 'block';
-                trackView.style.display = 'none';
-                fab.style.display = 'flex';
-                navItems[0].classList.add('active');
-                navItems[1].classList.remove('active');
-            } else if (tab === 'record') {
-                homeView.style.display = 'none';
-                trackView.style.display = 'flex'; 
-                fab.style.display = 'none';
-                navItems[0].classList.remove('active');
-                navItems[1].classList.add('active');
+            if (tab === 'record') {
+                setTimeout(() => initLiveMap(), 100); // Small delay to let div render
             }
         }
 
-        // --- GPS Logic ---
-        function startRun() {
-            if (!("geolocation" in navigator)) {
-                alert("Geolocation is not supported by this browser.");
-                return;
-            }
+        // --- Map Logic (Leaflet) ---
+        function initLiveMap() {
+            if (mapInstance) return; // Already initialized
 
-            // Start Timer
+            // Default view (will update on GPS lock)
+            mapInstance = L.map('live-map').setView([0, 0], 2);
+
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(mapInstance);
+
+            // Create empty red line for path
+            polyline = L.polyline([], {color: '#fc4c02', weight: 5}).addTo(mapInstance);
+        }
+
+        // --- Running Logic ---
+        function startRun() {
+            if (!navigator.geolocation) return alert("GPS not supported");
+
             isRunning = true;
-            document.getElementById('start-btn').style.display = 'none';
-            document.getElementById('stop-btn').style.display = 'block';
-            document.getElementById('gps-status').innerText = "Acquiring GPS Signal...";
-            
+            toggleButtons('running');
+            document.getElementById('gps-status').innerText = "Locating...";
+
+            // Timer
             timerInterval = setInterval(() => {
-                seconds++;
-                updateTrackerUI();
+                totalSeconds++;
+                updateDashboard();
             }, 1000);
 
-            // Start GPS Watch
-            const options = {
-                enableHighAccuracy: true,
-                timeout: 5000,
-                maximumAge: 0
-            };
-
+            // GPS
+            const options = { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 };
+            
             watchId = navigator.geolocation.watchPosition(
-                (position) => {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-                    const accuracy = position.coords.accuracy;
+                (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    const accuracy = pos.coords.accuracy;
 
-                    document.getElementById('gps-status').innerText = `GPS Active (Accuracy: ${Math.round(accuracy)}m)`;
+                    document.getElementById('gps-status').innerText = `Recording (GPS: ±${Math.round(accuracy)}m)`;
 
-                    if (lastLat !== null) {
-                        const dist = calculateDistance(lastLat, lastLon, lat, lon);
-                        // Only add distance if movement is significant (filter noise > 2 meters)
-                        if (dist > 0.002) { 
+                    // Add point to path
+                    if (pathCoordinates.length > 0) {
+                        const lastPt = pathCoordinates[pathCoordinates.length - 1];
+                        const dist = calculateDistance(lastPt[0], lastPt[1], lat, lng);
+                        
+                        // Filter noise: only add if moved > 5 meters
+                        if (dist > 0.005) {
                             totalDistance += dist;
+                            pathCoordinates.push([lat, lng]);
+                            updatePolyline();
                         }
+                    } else {
+                        // First point
+                        pathCoordinates.push([lat, lng]);
+                        // Center map on start
+                        mapInstance.setView([lat, lng], 16);
+                        // Add start marker
+                        L.circleMarker([lat, lng], {radius: 6, color: 'green', fillOpacity:1}).addTo(mapInstance);
                     }
-                    
-                    lastLat = lat;
-                    lastLon = lon;
-                    updateTrackerUI();
                 },
-                (error) => {
-                    document.getElementById('gps-status').innerText = "GPS Error: " + error.message;
-                },
+                (err) => {
+                    document.getElementById('gps-status').innerText = "GPS Error";
+                    console.error(err);
+                }, 
                 options
             );
+        }
+
+        function updatePolyline() {
+            if(polyline) {
+                polyline.setLatLngs(pathCoordinates);
+                mapInstance.setView(pathCoordinates[pathCoordinates.length - 1]);
+            }
         }
 
         function pauseRun() {
             isRunning = false;
             clearInterval(timerInterval);
-            navigator.geolocation.clearWatch(watchId); // Stop GPS to save battery
+            navigator.geolocation.clearWatch(watchId);
             document.getElementById('gps-status').innerText = "Paused";
-            
-            document.getElementById('stop-btn').style.display = 'none';
-            document.getElementById('finish-btn').style.display = 'block';
-            document.getElementById('resume-btn').style.display = 'block';
+            toggleButtons('paused');
         }
 
         function resumeRun() {
-            document.getElementById('finish-btn').style.display = 'none';
-            document.getElementById('resume-btn').style.display = 'none';
-            startRun(); // Re-bind GPS and timer
+            startRun();
         }
 
         function finishRun() {
@@ -477,171 +399,199 @@
                 id: Date.now(),
                 title: getTimeBasedGreeting() + " Run",
                 date: new Date().toISOString(),
-                distance: totalDistance, 
-                time: seconds / 60, // minutes
-                pace: totalDistance > 0 ? (seconds / 60) / totalDistance : 0
+                distance: totalDistance,
+                seconds: totalSeconds, // Store RAW seconds to fix 0m bug
+                path: pathCoordinates // Save the map path!
             };
 
-            saveRun(run);
+            runs.unshift(run);
+            localStorage.setItem('strava_runs_v2', JSON.stringify(runs));
+            
             resetTracker();
             switchTab('home');
-        }
-
-        // Haversine Formula (Calculate distance between two lat/lon points)
-        function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371; // Radius of Earth in km
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = 
-                Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c; // Distance in km
-        }
-
-        function updateTrackerUI() {
-            // Time
-            const hrs = Math.floor(seconds / 3600);
-            const mins = Math.floor((seconds % 3600) / 60);
-            const secs = seconds % 60;
-            document.getElementById('timer').innerText = 
-                `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-            
-            // Distance
-            document.getElementById('live-dist').innerText = totalDistance.toFixed(2);
-
-            // Pace (min/km)
-            if (totalDistance > 0.05) { // Only calculate pace after 50m to avoid infinity spikes
-                const paceDecimal = (seconds / 60) / totalDistance;
-                const paceMin = Math.floor(paceDecimal);
-                const paceSec = Math.floor((paceDecimal - paceMin) * 60);
-                document.getElementById('live-pace').innerText = `${paceMin}:${paceSec.toString().padStart(2, '0')}`;
-            } else {
-                document.getElementById('live-pace').innerText = "--:--";
-            }
-        }
-
-        function resetTracker() {
-            seconds = 0;
-            totalDistance = 0;
-            lastLat = null;
-            lastLon = null;
-            isRunning = false;
-            clearInterval(timerInterval);
-            navigator.geolocation.clearWatch(watchId);
-            
-            updateTrackerUI();
-            document.getElementById('gps-status').innerText = "Waiting for GPS...";
-            document.getElementById('start-btn').style.display = 'block';
-            document.getElementById('stop-btn').style.display = 'none';
-            document.getElementById('finish-btn').style.display = 'none';
-            document.getElementById('resume-btn').style.display = 'none';
-        }
-
-        function getTimeBasedGreeting() {
-            const hour = new Date().getHours();
-            if (hour < 12) return "Morning";
-            if (hour < 18) return "Afternoon";
-            return "Evening";
-        }
-
-        // --- Data Handling ---
-        function saveManualRun() {
-            const dist = parseFloat(document.getElementById('manual-dist').value);
-            const time = parseFloat(document.getElementById('manual-time').value);
-            const title = document.getElementById('manual-title').value || "Run";
-
-            if (!dist || !time) return alert("Please fill in distance and time");
-
-            const run = {
-                id: Date.now(),
-                title: title,
-                date: new Date().toISOString(),
-                distance: dist,
-                time: time,
-                pace: time / dist
-            };
-
-            saveRun(run);
-            closeModal();
-            document.getElementById('manual-dist').value = '';
-            document.getElementById('manual-time').value = '';
-        }
-
-        function saveRun(run) {
-            runs.unshift(run);
-            localStorage.setItem('strava_runs', JSON.stringify(runs));
             renderFeed();
             updateWeeklyStats();
         }
 
+        function resetTracker() {
+            totalSeconds = 0;
+            totalDistance = 0;
+            pathCoordinates = [];
+            isRunning = false;
+            clearInterval(timerInterval);
+            navigator.geolocation.clearWatch(watchId);
+            
+            // Clear map line
+            if(polyline) polyline.setLatLngs([]);
+            // Remove markers (hacky way: remove map and re-init later or just keep simple)
+            mapInstance.remove(); 
+            mapInstance = null;
+
+            updateDashboard();
+            toggleButtons('idle');
+            document.getElementById('gps-status').innerText = "Ready";
+        }
+
+        // --- UI Helpers ---
+        function updateDashboard() {
+            document.getElementById('timer').innerText = formatTime(totalSeconds);
+            document.getElementById('live-dist').innerText = totalDistance.toFixed(2);
+            
+            // Pace
+            if (totalDistance > 0.05) {
+                const paceSeconds = totalSeconds / totalDistance;
+                document.getElementById('live-pace').innerText = formatTime(paceSeconds, true);
+            }
+        }
+
+        function toggleButtons(state) {
+            const startBtn = document.getElementById('start-btn');
+            const stopBtn = document.getElementById('stop-btn');
+            const finishBtn = document.getElementById('finish-btn');
+            const resumeBtn = document.getElementById('resume-btn');
+
+            startBtn.style.display = 'none';
+            stopBtn.style.display = 'none';
+            finishBtn.style.display = 'none';
+            resumeBtn.style.display = 'none';
+
+            if (state === 'idle') startBtn.style.display = 'block';
+            if (state === 'running') stopBtn.style.display = 'block';
+            if (state === 'paused') {
+                finishBtn.style.display = 'block';
+                resumeBtn.style.display = 'block';
+            }
+        }
+
+        // --- Feed & History ---
         function renderFeed() {
             const container = document.getElementById('feed-container');
             container.innerHTML = '';
 
             if (runs.length === 0) {
-                container.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">No runs yet. Go for a run!</p>';
+                container.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">No runs yet.</p>';
                 return;
             }
 
             runs.forEach(run => {
                 const date = new Date(run.date);
-                const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' });
+                const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' });
                 
-                const paceMin = Math.floor(run.pace);
-                const paceSec = Math.floor((run.pace - paceMin) * 60);
+                // Pace Calculation
+                let paceStr = "--:--";
+                if(run.distance > 0) {
+                    const paceSecs = run.seconds / run.distance;
+                    paceStr = formatTime(paceSecs, true);
+                }
 
-                const runHrs = Math.floor(run.time / 60);
-                const runMins = Math.floor(run.time % 60);
-                const timeStr = runHrs > 0 ? `${runHrs}h ${runMins}m` : `${runMins}m`;
+                // Check if map data exists
+                const hasMap = run.path && run.path.length > 0;
+                const mapBtnHtml = hasMap 
+                    ? `<button class="btn-map" onclick="openHistoryMap(${run.id})">🗺️ View Route</button>` 
+                    : '';
 
                 const html = `
                 <div class="activity">
                     <div class="user-header">
                         <div class="avatar">Y</div>
-                        <div class="activity-meta">
-                            <h3>You</h3>
-                            <span>${dateStr}</span>
-                        </div>
+                        <div class="activity-meta"><h3>You</h3><span>${dateStr}</span></div>
                     </div>
                     <h2 style="font-size:1.1rem; margin-bottom:5px;">${run.title}</h2>
                     <div class="run-stats">
-                        <div class="run-stat">
-                            <label>Distance</label>
-                            ${run.distance.toFixed(2)} km
-                        </div>
-                        <div class="run-stat">
-                            <label>Pace</label>
-                            ${paceMin}:${paceSec.toString().padStart(2, '0')} /km
-                        </div>
-                        <div class="run-stat">
-                            <label>Time</label>
-                            ${timeStr}
-                        </div>
+                        <div class="run-stat"><label>Distance</label>${run.distance.toFixed(2)} km</div>
+                        <div class="run-stat"><label>Pace</label>${paceStr} /km</div>
+                        <div class="run-stat"><label>Time</label>${formatTime(run.seconds)}</div>
                     </div>
+                    ${mapBtnHtml}
                 </div>`;
                 container.innerHTML += html;
             });
         }
 
-        function updateWeeklyStats() {
-            let totalDist = 0;
-            let totalTime = 0;
-            runs.forEach(run => {
-                totalDist += run.distance;
-                totalTime += run.time;
-            });
+        // --- History Map Modal ---
+        function openHistoryMap(runId) {
+            const run = runs.find(r => r.id === runId);
+            if (!run || !run.path || run.path.length === 0) return;
 
-            document.getElementById('weekly-km').innerText = totalDist.toFixed(1);
-            document.getElementById('weekly-runs').innerText = runs.length;
-            
-            const hrs = Math.floor(totalTime / 60);
-            const mins = Math.floor(totalTime % 60);
-            document.getElementById('weekly-time').innerText = `${hrs}h ${mins}m`;
+            document.getElementById('map-modal').style.display = 'flex';
+
+            // Wait for modal to be visible before drawing map
+            setTimeout(() => {
+                if (historyMapInstance) {
+                    historyMapInstance.remove();
+                }
+                
+                // Get center of path roughly
+                const center = run.path[0];
+                historyMapInstance = L.map('history-map').setView(center, 14);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap'
+                }).addTo(historyMapInstance);
+
+                // Draw path
+                const line = L.polyline(run.path, {color: '#fc4c02', weight: 5}).addTo(historyMapInstance);
+                
+                // Zoom map to fit the run
+                historyMapInstance.fitBounds(line.getBounds());
+
+                // Add Start/End markers
+                L.circleMarker(run.path[0], {color: 'green', radius: 6}).addTo(historyMapInstance);
+                L.circleMarker(run.path[run.path.length-1], {color: 'red', radius: 6}).addTo(historyMapInstance);
+            }, 100);
         }
 
-        function openModal() { document.getElementById('entry-modal').style.display = 'flex'; }
-        function closeModal() { document.getElementById('entry-modal').style.display = 'none'; }
+        function closeMapModal() {
+            document.getElementById('map-modal').style.display = 'none';
+        }
+
+        // --- Utilities ---
+        function formatTime(totalSecs, isPace = false) {
+            if (!totalSecs && totalSecs !== 0) return "00:00";
+            
+            // Round to nearest second
+            totalSecs = Math.round(totalSecs);
+            
+            const hrs = Math.floor(totalSecs / 3600);
+            const mins = Math.floor((totalSecs % 3600) / 60);
+            const secs = totalSecs % 60;
+
+            const m = mins.toString().padStart(2, '0');
+            const s = secs.toString().padStart(2, '0');
+
+            if (isPace) return `${mins}:${s}`; // Pace usually just MM:SS
+            if (hrs > 0) return `${hrs}:${m}:${s}`;
+            return `${m}:${s}`;
+        }
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; 
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function getTimeBasedGreeting() {
+            const h = new Date().getHours();
+            if (h < 12) return "Morning";
+            if (h < 18) return "Afternoon";
+            return "Evening";
+        }
+
+        function updateWeeklyStats() {
+            let d = 0, t = 0;
+            runs.forEach(r => { d += r.distance; t += r.seconds; });
+            
+            document.getElementById('weekly-km').innerText = d.toFixed(1);
+            document.getElementById('weekly-runs').innerText = runs.length;
+            
+            const hrs = Math.floor(t / 3600);
+            const mins = Math.floor((t % 3600) / 60);
+            document.getElementById('weekly-time').innerText = `${hrs}h ${mins}m`;
+        }
 
     </script>
 </body>
