@@ -64,6 +64,7 @@ main { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 80px; display: 
 
 /* Feed / Activities */
 .activity { position: relative; } /* Styles moved inline in JS for cleaner cards in this iteration */
+.btn-edit-activity { position: absolute; top: 5px; right: 5px; font-size: 1.2rem; cursor: pointer; color: var(--text-gray); padding: 5px; z-index: 10; }
 .run-stats { display: flex; justify-content: space-between; margin-top: 10px; }
 .run-stat div { font-size: 1.1rem; font-weight: 600; }
 .run-stat label { font-size: 0.75rem; color: var(--text-gray); display: block; }
