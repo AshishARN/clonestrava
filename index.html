@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>RunStrava Pro</title>
-    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="style.css">
 </head>
@@ -24,7 +23,6 @@
                 <div><div class="stat-value" id="weekly-runs">0</div><div class="stat-label">runs</div></div>
             </div>
         </div>
-
         <h3 class="section-title">Feed</h3>
         <div id="feed-container" class="card"></div>
     </main>
@@ -34,13 +32,11 @@
         <div class="tracker-controls-container">
             <div id="gps-status">GPS Ready</div>
             <div class="timer-display" id="timer">00:00:00</div>
-            
             <div class="stat-grid" style="margin-bottom:20px;">
                 <div><div class="stat-value" id="live-dist">0.00</div><div class="stat-label">km</div></div>
                 <div><div class="stat-value" id="live-pace">--:--</div><div class="stat-label">pace</div></div>
                 <div><div class="stat-value" id="live-elev">0</div><div class="stat-label">elev (m)</div></div>
             </div>
-
             <div class="controls">
                 <button id="start-btn" class="circle-btn btn-start" onclick="startRun()">START</button>
                 <button id="stop-btn" class="circle-btn btn-stop" onclick="pauseRun()">STOP</button>
@@ -59,8 +55,9 @@
                     <img id="profile-img">
                 </div>
                 <div class="profile-name" id="profile-name">Runner</div>
+                <div class="profile-sub" id="profile-location">Location</div>
                 
-                <button class="btn-small-outline" onclick="editProfileName()">Edit Details</button>
+                <button class="btn-small-outline" onclick="openProfileModal()">Edit Details</button>
             </div>
             
             <div style="padding: 15px;">
@@ -75,11 +72,25 @@
             <h3 class="section-title" style="margin:0;">My Gear</h3>
             <button onclick="addShoe()" class="text-btn">+ Add Shoe</button>
         </div>
-        
         <div class="card" id="gear-container" style="margin-top:10px;"></div>
-
         <button onclick="resetData()" class="btn-danger">Reset All Data</button>
     </main>
+
+    <div id="profile-modal" class="modal">
+        <div class="modal-header">
+            <h3>Edit Profile</h3>
+            <span onclick="closeProfileModal()" class="close-btn">✕</span>
+        </div>
+        <div class="modal-content">
+            <label>Name</label>
+            <input type="text" id="edit-profile-name">
+            
+            <label>Location</label>
+            <input type="text" id="edit-profile-loc" placeholder="City, Country">
+            
+            <button class="btn-full" onclick="saveProfileChanges()">Save Changes</button>
+        </div>
+    </div>
 
     <div id="save-modal" class="modal">
         <div class="modal-header">
@@ -88,23 +99,18 @@
         </div>
         <div class="modal-content">
             <h2 id="save-dist-display">0.00 km</h2>
-            
             <div id="manual-fields">
                 <label>Distance (km)</label>
                 <input type="number" id="manual-dist-input" step="0.01">
                 <label>Time (minutes)</label>
                 <input type="number" id="manual-time-input">
             </div>
-
             <label>Title</label>
             <input type="text" id="save-title" value="Morning Run">
-            
             <label>Description</label>
             <textarea id="save-desc" rows="3" placeholder="How did it feel?"></textarea>
-            
             <label>Shoe</label>
             <select id="save-shoe"></select>
-
             <button class="btn-full" onclick="confirmSave()">Save Activity</button>
         </div>
     </div>
@@ -115,7 +121,6 @@
             <span onclick="document.getElementById('map-modal').style.display='none'" class="close-btn">✕</span>
         </div>
         <div id="history-map" style="flex:1; width:100%;"></div>
-        
         <div style="padding:15px; background:white; border-top:1px solid #ddd;">
              <button onclick="exportGPX()" class="btn-full" style="margin:0; background:#333;">⬇ Export GPX File</button>
         </div>

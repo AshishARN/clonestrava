@@ -2,6 +2,7 @@
 let runs = JSON.parse(localStorage.getItem('strava_runs_v3')) || [];
 let profile = JSON.parse(localStorage.getItem('strava_profile_v3')) || { 
     name: "New Runner", 
+    location: "World Citizen", // Added Location default
     photo: null,
     gear: [{id: 1, name: "Default Shoes", dist: 0}]
 };
@@ -16,8 +17,6 @@ let lastAltitude = null;
 let historyMapInstance = null;
 let isManualEntry = false;
 let currentRunIdForExport = null;
-
-// NEW: Tracking which run is being edited
 let editingRunId = null;
 
 // --- Initialization ---
@@ -41,7 +40,7 @@ function switchTab(tab) {
         document.getElementById('home-view').style.display = 'block';
         document.getElementById('nav-home').classList.add('active');
         document.getElementById('manual-add-btn').style.display = 'block';
-        renderFeed(); // Re-render to ensure edits show up
+        renderFeed(); 
     } else if (tab === 'record') {
         document.getElementById('tracker-view').style.display = 'flex';
         document.getElementById('nav-record').classList.add('active');
@@ -144,15 +143,13 @@ function toggleButtons(state) {
 
 // --- Data Saving & Editing ---
 
-// 1. Open Modal for Manual Entry
 function openManualEntry() {
     isManualEntry = true;
-    editingRunId = null; // New Run
+    editingRunId = null; 
     document.getElementById('modal-title').innerText = "Manual Entry";
     document.getElementById('manual-fields').style.display = 'block';
     document.getElementById('save-dist-display').style.display = 'none';
     
-    // Clear fields
     document.getElementById('manual-dist-input').value = '';
     document.getElementById('manual-time-input').value = '';
     document.getElementById('save-title').value = "Run";
@@ -162,10 +159,9 @@ function openManualEntry() {
     document.getElementById('save-modal').style.display = 'flex';
 }
 
-// 2. Open Modal for Finishing a GPS Run
 function openFinishModal() {
     isManualEntry = false;
-    editingRunId = null; // New Run
+    editingRunId = null; 
     document.getElementById('modal-title').innerText = "Save Activity";
     document.getElementById('manual-fields').style.display = 'none';
     document.getElementById('save-dist-display').style.display = 'block';
@@ -176,32 +172,22 @@ function openFinishModal() {
     document.getElementById('save-modal').style.display = 'flex';
 }
 
-// 3. Open Modal for EDITING an Existing Run
 function openEditModal(runId) {
     const run = runs.find(r => r.id === runId);
     if(!run) return;
 
-    editingRunId = runId; // Mark as editing mode
-    isManualEntry = false; // We use standard fields, but won't allow editing distance on GPS runs usually
+    editingRunId = runId; 
+    isManualEntry = false; 
 
     document.getElementById('modal-title').innerText = "Edit Activity";
     document.getElementById('save-modal').style.display = 'flex';
-    
-    // Populate fields
     document.getElementById('save-title').value = run.title;
     document.getElementById('save-desc').value = run.desc || "";
-    
-    // Setup Shoe Select
     populateShoeSelect();
     document.getElementById('save-shoe').value = run.shoeId;
-
-    // Handle Distance Display
     document.getElementById('save-dist-display').style.display = 'block';
     document.getElementById('save-dist-display').innerText = run.distance.toFixed(2) + " km";
     document.getElementById('manual-fields').style.display = 'none';
-
-    // Note: To simplify, we only allow editing Title, Desc, and Shoe for now. 
-    // Editing distance/time of valid GPS runs is usually disabled in Strava too.
 }
 
 function closeSaveModal() { document.getElementById('save-modal').style.display = 'none'; }
@@ -217,13 +203,12 @@ function populateShoeSelect() {
     });
 }
 
-// 4. Save Logic (Handles New and Edits)
 function confirmSave() {
     const title = document.getElementById('save-title').value;
     const desc = document.getElementById('save-desc').value;
     const shoeId = parseInt(document.getElementById('save-shoe').value);
     
-    // CASE A: UPDATE EXISTING RUN
+    // UPDATE EXISTING
     if (editingRunId) {
         const runIndex = runs.findIndex(r => r.id === editingRunId);
         if (runIndex > -1) {
@@ -231,33 +216,26 @@ function confirmSave() {
             const oldShoeId = oldRun.shoeId;
             const dist = oldRun.distance;
 
-            // Update Run Details
             runs[runIndex].title = title;
             runs[runIndex].desc = desc;
             runs[runIndex].shoeId = shoeId;
 
-            // Handle Shoe Mileage Math (If shoe changed)
             if (oldShoeId !== shoeId) {
-                // Remove from old shoe
                 const oldShoe = profile.gear.find(g => g.id === oldShoeId);
                 if (oldShoe) oldShoe.dist = Math.max(0, oldShoe.dist - dist);
-                
-                // Add to new shoe
                 const newShoe = profile.gear.find(g => g.id === shoeId);
                 if (newShoe) newShoe.dist += dist;
-                
                 saveProfile();
             }
-
             localStorage.setItem('strava_runs_v3', JSON.stringify(runs));
             closeSaveModal();
-            renderFeed(); // Re-render feed to show changes
+            renderFeed(); 
             editingRunId = null;
             return;
         }
     }
 
-    // CASE B: CREATE NEW RUN
+    // CREATE NEW
     let dist, secs;
     if (isManualEntry) {
         dist = parseFloat(document.getElementById('manual-dist-input').value) || 0;
@@ -281,7 +259,6 @@ function confirmSave() {
         path: isManualEntry ? [] : pathCoordinates
     };
 
-    // Add mileage to shoe
     const shoe = profile.gear.find(g => g.id === shoeId);
     if(shoe) shoe.dist += dist;
     saveProfile();
@@ -315,6 +292,8 @@ function resetTracker() {
 // --- Profile & UI ---
 function loadProfileUI() {
     document.getElementById('profile-name').innerText = profile.name;
+    document.getElementById('profile-location').innerText = profile.location || "World Citizen";
+    
     if(profile.photo) {
         document.getElementById('profile-img').src = profile.photo;
         document.getElementById('profile-img').style.display = 'block';
@@ -342,13 +321,29 @@ function loadProfileUI() {
     });
 }
 
-function editProfileName() {
-    const newName = prompt("Enter your name:", profile.name);
+// NEW: Open Profile Edit Modal
+function openProfileModal() {
+    document.getElementById('edit-profile-name').value = profile.name;
+    document.getElementById('edit-profile-loc').value = profile.location || "";
+    document.getElementById('profile-modal').style.display = 'flex';
+}
+
+function closeProfileModal() {
+    document.getElementById('profile-modal').style.display = 'none';
+}
+
+// NEW: Save Profile Changes
+function saveProfileChanges() {
+    const newName = document.getElementById('edit-profile-name').value;
+    const newLoc = document.getElementById('edit-profile-loc').value;
+    
     if(newName && newName.trim() !== "") {
         profile.name = newName;
+        profile.location = newLoc;
         saveProfile();
         loadProfileUI();
-        renderFeed(); // Update feed to show new name on cards
+        renderFeed(); 
+        closeProfileModal();
     }
 }
 
@@ -397,7 +392,7 @@ function renderFeed() {
                 </div>
                 <div>
                     <h3 style="font-size:0.95rem;">${profile.name}</h3>
-                    <span style="font-size:0.75rem; color:gray;">${date}</span>
+                    <span style="font-size:0.75rem; color:gray;">${date} - ${profile.location || "Run"}</span>
                 </div>
             </div>
             <h2 style="font-size:1.1rem;">${run.title}</h2>
