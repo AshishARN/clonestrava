@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RunStrava Ultra 2.0</title>
+    <title>RunStrava Complete</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
@@ -38,9 +38,8 @@
             padding: 15px;
             text-align: center;
             border-bottom: 1px solid var(--border);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
+            position: sticky; top: 0; z-index: 1000;
+            display: flex; justify-content: center; align-items: center;
         }
 
         header h1 {
@@ -50,61 +49,54 @@
             font-style: italic;
         }
 
-        /* --- Main Content --- */
-        main {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-            padding-bottom: 80px; 
-            display: none; /* Hidden by default, toggled by JS */
+        .header-btn-right {
+            position: absolute; right: 15px;
+            color: var(--primary); font-size: 1.5rem; cursor: pointer;
         }
 
-        /* Show Home by default */
+        /* --- Layout --- */
+        main {
+            flex: 1; overflow-y: auto;
+            padding: 15px; padding-bottom: 80px; 
+            display: none;
+        }
         #home-view { display: block; }
 
         .card {
-            background: var(--light);
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
+            background: var(--light); border-radius: 8px;
+            padding: 15px; margin-bottom: 15px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
-        /* --- Stats Grid --- */
+        /* --- Stats --- */
         .stat-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            text-align: center;
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 10px; text-align: center;
         }
         .stat-value { font-size: 1.2rem; font-weight: bold; }
         .stat-label { font-size: 0.8rem; color: var(--text-gray); }
 
-        /* --- Activity Feed --- */
+        /* --- Feed --- */
         .activity {
             border-bottom: 1px solid var(--border);
-            padding-bottom: 15px;
-            margin-bottom: 15px;
+            padding-bottom: 15px; margin-bottom: 15px;
         }
         .activity:last-child { border: none; margin: 0; padding-bottom: 0; }
         
         .user-header { display: flex; align-items: center; margin-bottom: 10px; }
-        .avatar {
+        .avatar-small {
             width: 40px; height: 40px; background: var(--dark);
             border-radius: 50%; margin-right: 10px;
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-weight: bold; overflow: hidden;
+            overflow: hidden; display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: bold;
         }
-        .avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-small img { width: 100%; height: 100%; object-fit: cover; }
 
-        .activity-meta h3 { font-size: 0.95rem; }
-        .activity-meta span { font-size: 0.75rem; color: var(--text-gray); }
-
-        .run-stats {
-            display: flex; justify-content: space-between; margin-top: 10px;
-        }
+        .run-stats { display: flex; justify-content: space-between; margin-top: 10px; }
         .run-stat div { font-size: 1.1rem; font-weight: 600; }
         .run-stat label { font-size: 0.75rem; color: var(--text-gray); display: block; }
+
+        .shoe-tag { font-size: 0.75rem; color: var(--text-gray); margin-top: 5px; display: block;}
 
         .btn-map {
             margin-top: 15px; width: 100%; padding: 8px;
@@ -112,118 +104,72 @@
             border-radius: 4px; font-weight: bold; cursor: pointer;
         }
 
-        /* --- PROFILE STYLES (NEW) --- */
+        /* --- Profile --- */
         .profile-header {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px 0;
-            background: var(--light);
+            display: flex; flex-direction: column; align-items: center;
+            padding: 20px 0; background: var(--light);
             border-bottom: 1px solid var(--border);
-            margin: -15px -15px 15px -15px; /* Bleed to edges */
+            margin: -15px -15px 15px -15px;
         }
         
         .profile-avatar {
-            width: 80px; height: 80px;
-            background: var(--dark); color: white;
-            border-radius: 50%; display: flex;
-            align-items: center; justify-content: center;
-            font-size: 2rem; margin-bottom: 10px;
-            border: 2px solid white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            width: 80px; height: 80px; background: var(--dark); color: white;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; margin-bottom: 10px; position: relative;
+            overflow: hidden; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-
-        .profile-name { font-size: 1.3rem; font-weight: bold; }
-        .profile-loc { color: var(--text-gray); font-size: 0.9rem; margin-bottom: 15px; }
+        .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
         
-        .btn-edit {
-            padding: 6px 20px;
-            border: 1px solid #ccc;
-            background: transparent;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            cursor: pointer;
-        }
-
-        .section-title {
-            font-size: 0.9rem; font-weight: bold; color: var(--dark);
-            margin: 20px 0 10px; padding-bottom: 5px;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .stat-row {
-            display: flex; justify-content: space-between;
-            padding: 10px 0; border-bottom: 1px solid #eee;
-        }
-        .stat-row:last-child { border: none; }
+        .profile-name { font-size: 1.3rem; font-weight: bold; }
         
         .gear-item {
-            display: flex; align-items: center;
-            padding: 10px 0;
+            display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee;
         }
         .gear-icon { font-size: 1.5rem; margin-right: 15px; }
-        
-        .danger-zone { margin-top: 30px; text-align: center; }
-        .btn-reset { color: red; background: none; border: 1px solid red; padding: 10px; width: 100%; border-radius: 4px; }
 
-
-        /* --- Tracker UI --- */
-        #tracker-view {
-            display: none; /* Flex when active */
-            flex-direction: column;
-            height: 100%;
-            background: white;
-            padding: 0;
-        }
-
+        /* --- Tracker --- */
+        #tracker-view { display: none; flex-direction: column; height: 100%; background: white; padding: 0; }
         #live-map { flex: 1; width: 100%; background: #eee; }
-
-        .tracker-controls-container {
-            padding: 20px; background: white;
-            border-top: 1px solid #ddd; z-index: 500;
-        }
-
-        .timer-display {
-            font-size: 3.5rem; font-weight: 200; text-align: center;
-            font-variant-numeric: tabular-nums; margin-bottom: 15px;
-        }
-
-        .tracker-stats {
-            display: flex; justify-content: space-around;
-            text-align: center; margin-bottom: 20px;
-        }
-
+        .tracker-controls-container { padding: 20px; background: white; border-top: 1px solid #ddd; z-index: 500; }
+        
+        .timer-display { font-size: 3.5rem; font-weight: 200; text-align: center; font-variant-numeric: tabular-nums; margin-bottom: 15px; }
+        .controls { display: flex; gap: 20px; justify-content: center; }
+        
         .circle-btn {
             width: 70px; height: 70px; border-radius: 50%; border: none;
-            color: white; font-size: 0.9rem; font-weight: bold;
-            cursor: pointer; transition: transform 0.1s;
+            color: white; font-size: 0.9rem; font-weight: bold; cursor: pointer;
         }
-        .circle-btn:active { transform: scale(0.95); }
         .btn-start { background: var(--primary); }
         .btn-stop { background: var(--dark); }
         .btn-resume { background: #4CAF50; }
         .btn-finish { background: #E91E63; }
-        
-        .controls { display: flex; gap: 20px; justify-content: center; }
 
-        /* --- Map Modal --- */
-        .map-modal {
+        /* --- Modals --- */
+        .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: white; z-index: 2000; flex-direction: column;
         }
-        #history-map { flex: 1; width: 100%; }
+        .modal-content { padding: 20px; overflow-y: auto; flex: 1;}
         .modal-header {
-            padding: 15px; background: var(--light);
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid #ddd;
+            padding: 15px; background: var(--light); display: flex; justify-content: space-between;
+            align-items: center; border-bottom: 1px solid #ddd;
         }
-        .close-btn { font-size: 1.5rem; cursor: pointer; padding: 5px; }
+        
+        /* Form Elements */
+        label { display: block; margin-top: 15px; font-weight: bold; font-size: 0.9rem; }
+        input, select, textarea {
+            width: 100%; padding: 12px; margin-top: 5px;
+            border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;
+        }
+        .btn-full {
+            width: 100%; padding: 15px; background: var(--primary); color: white;
+            border: none; border-radius: 4px; font-weight: bold; font-size: 1rem; margin-top: 20px;
+        }
 
         /* --- Navbar --- */
         nav {
-            position: fixed; bottom: 0; width: 100%;
-            background: var(--light); display: flex; justify-content: space-around;
-            padding: 10px 0; border-top: 1px solid #ddd; z-index: 1000;
+            position: fixed; bottom: 0; width: 100%; background: var(--light);
+            display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #ddd; z-index: 1000;
         }
         .nav-item { text-align: center; color: var(--text-gray); font-size: 0.7rem; cursor: pointer; }
         .nav-item.active { color: var(--primary); }
@@ -235,6 +181,7 @@
 
     <header>
         <h1>RunStrava</h1>
+        <div class="header-btn-right" id="manual-add-btn" onclick="openManualEntry()">+</div>
     </header>
 
     <main id="home-view">
@@ -247,9 +194,8 @@
             </div>
         </div>
 
-        <h3 style="margin: 20px 0 10px; font-size: 1rem;">Recent Activity</h3>
-        <div id="feed-container" class="card">
-            </div>
+        <h3 style="margin: 20px 0 10px; font-size: 1rem;">Feed</h3>
+        <div id="feed-container" class="card"></div>
     </main>
 
     <div id="tracker-view">
@@ -257,14 +203,14 @@
         <div class="tracker-controls-container">
             <div id="gps-status" style="text-align:center; font-size:0.8rem; color:var(--text-gray); margin-bottom:5px;">GPS Ready</div>
             <div class="timer-display" id="timer">00:00:00</div>
-            <div class="tracker-stats">
+            <div class="stat-grid" style="margin-bottom:20px;">
                 <div><div class="stat-value" id="live-dist">0.00</div><div class="stat-label">km</div></div>
-                <div><div class="stat-value" id="live-pace">--:--</div><div class="stat-label">avg pace</div></div>
+                <div><div class="stat-value" id="live-pace">--:--</div><div class="stat-label">pace</div></div>
             </div>
             <div class="controls">
                 <button id="start-btn" class="circle-btn btn-start" onclick="startRun()">START</button>
                 <button id="stop-btn" class="circle-btn btn-stop" onclick="pauseRun()" style="display:none;">STOP</button>
-                <button id="finish-btn" class="circle-btn btn-finish" onclick="finishRun()" style="display:none;">FINISH</button>
+                <button id="finish-btn" class="circle-btn btn-finish" onclick="openFinishModal()" style="display:none;">FINISH</button>
                 <button id="resume-btn" class="circle-btn btn-resume" onclick="resumeRun()" style="display:none;">RESUME</button>
             </div>
         </div>
@@ -273,62 +219,68 @@
     <main id="profile-view">
         <div class="card" style="padding: 0;">
             <div class="profile-header">
-                <div class="profile-avatar" id="profile-initial">Y</div>
-                <div class="profile-name" id="profile-name">You</div>
-                <div class="profile-loc" id="profile-loc">San Francisco, CA</div>
-                <button class="btn-edit" onclick="editProfile()">Edit Profile</button>
+                <input type="file" id="avatar-input" style="display:none;" accept="image/*" onchange="handleAvatarUpload(this)">
+                <div class="profile-avatar" onclick="document.getElementById('avatar-input').click()">
+                    <span id="profile-initial">Y</span>
+                    <img id="profile-img" style="display:none;">
+                </div>
+                <div class="profile-name" id="profile-name">Runner</div>
+                <div style="color:var(--text-gray); font-size:0.8rem; margin-top:5px;">Tap photo to edit</div>
             </div>
             
             <div style="padding: 15px;">
                 <div class="stat-grid">
-                    <div><div class="stat-value">0</div><div class="stat-label">Following</div></div>
-                    <div><div class="stat-value">0</div><div class="stat-label">Followers</div></div>
-                    <div><div class="stat-value" id="total-activities">0</div><div class="stat-label">Activities</div></div>
+                    <div><div class="stat-value" id="all-time-runs">0</div><div class="stat-label">Activities</div></div>
+                    <div><div class="stat-value" id="all-time-km">0.0</div><div class="stat-label">Total Km</div></div>
                 </div>
             </div>
         </div>
 
-        <h3 class="section-title">Statistics</h3>
-        <div class="card">
-            <div class="stat-row">
-                <span>Total Distance</span>
-                <span style="font-weight:bold;"><span id="all-time-km">0.0</span> km</span>
-            </div>
-            <div class="stat-row">
-                <span>Total Time</span>
-                <span style="font-weight:bold;" id="all-time-hours">0h 0m</span>
-            </div>
-            <div class="stat-row">
-                <span>Avg Pace</span>
-                <span style="font-weight:bold;" id="all-time-pace">0:00 /km</span>
-            </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 class="section-title">My Gear</h3>
+            <button onclick="addShoe()" style="color:var(--primary); background:none; border:none; font-weight:bold;">+ Add Shoe</button>
         </div>
+        
+        <div class="card" id="gear-container">
+            </div>
 
-        <h3 class="section-title">Gear</h3>
-        <div class="card">
-            <div class="gear-item">
-                <div class="gear-icon">👟</div>
-                <div style="flex:1;">
-                    <div style="font-weight:bold;">Nike Pegasus 39</div>
-                    <div style="font-size:0.8rem; color:gray;">Primary Shoe</div>
-                </div>
-                <div style="color:var(--text-gray); font-size:0.9rem;">
-                    <span id="shoe-km">0</span> km
-                </div>
-            </div>
-        </div>
-
-        <div class="danger-zone">
-            <button class="btn-reset" onclick="resetData()">⚠ Reset All Data</button>
-        </div>
+        <button onclick="resetData()" style="width:100%; padding:10px; color:red; background:white; border:1px solid #ddd; margin-top:20px;">Reset All Data</button>
     </main>
 
-    <div id="map-modal" class="map-modal">
+    <div id="save-modal" class="modal">
         <div class="modal-header">
-            <h3>Route View</h3>
-            <span class="close-btn" onclick="closeMapModal()">✕</span>
+            <h3>Save Activity</h3>
+            <span onclick="closeSaveModal()" style="font-size:1.5rem; cursor:pointer;">✕</span>
         </div>
-        <div id="history-map"></div>
+        <div class="modal-content">
+            <h2 id="save-dist-display" style="text-align:center; font-size:2rem; margin:10px 0;">0.00 km</h2>
+            
+            <label>Title</label>
+            <input type="text" id="save-title" value="Morning Run">
+            
+            <label>Description</label>
+            <textarea id="save-desc" rows="3" placeholder="How did it feel?"></textarea>
+            
+            <label>Shoe</label>
+            <select id="save-shoe"></select>
+
+            <div id="manual-fields" style="display:none;">
+                <label>Distance (km)</label>
+                <input type="number" id="manual-dist-input" step="0.01">
+                <label>Time (minutes)</label>
+                <input type="number" id="manual-time-input">
+            </div>
+
+            <button class="btn-full" onclick="confirmSave()">Save Activity</button>
+        </div>
+    </div>
+
+    <div id="map-modal" class="modal" style="height:100%;">
+        <div class="modal-header">
+            <h3>Route</h3>
+            <span onclick="document.getElementById('map-modal').style.display='none'" style="font-size:1.5rem; cursor:pointer;">✕</span>
+        </div>
+        <div id="history-map" style="flex:1; width:100%;"></div>
     </div>
 
     <nav>
@@ -347,17 +299,18 @@
 
     <script>
         // --- State ---
-        let runs = JSON.parse(localStorage.getItem('strava_runs_v2')) || [];
-        let userProfile = JSON.parse(localStorage.getItem('strava_profile')) || {
-            name: "New Runner",
-            location: "World Citizen"
+        let runs = JSON.parse(localStorage.getItem('strava_runs_v3')) || [];
+        let profile = JSON.parse(localStorage.getItem('strava_profile_v3')) || { 
+            name: "New Runner", 
+            photo: null,
+            gear: [{id: 1, name: "Default Shoes", dist: 0}]
         };
-        
-        // Runtime variables
+
+        // Runtime vars
         let timerInterval, totalSeconds = 0, isRunning = false;
-        let watchId = null, mapInstance = null, polyline = null;
-        let pathCoordinates = [], totalDistance = 0;
+        let watchId = null, mapInstance = null, polyline = null, pathCoordinates = [], totalDistance = 0;
         let historyMapInstance = null;
+        let isManualEntry = false;
 
         // --- Init ---
         window.onload = function() {
@@ -368,84 +321,17 @@
 
         // --- Navigation ---
         function switchTab(tab) {
-            // Hide all
-            document.getElementById('home-view').style.display = 'none';
-            document.getElementById('tracker-view').style.display = 'none';
-            document.getElementById('profile-view').style.display = 'none';
-            
-            // Reset Nav
-            document.getElementById('nav-home').classList.remove('active');
-            document.getElementById('nav-record').classList.remove('active');
-            document.getElementById('nav-profile').classList.remove('active');
-
-            // Show selected
-            if (tab === 'home') {
-                document.getElementById('home-view').style.display = 'block';
-                document.getElementById('nav-home').classList.add('active');
-            } else if (tab === 'record') {
-                document.getElementById('tracker-view').style.display = 'flex';
-                document.getElementById('nav-record').classList.add('active');
-                setTimeout(() => initLiveMap(), 100);
-            } else if (tab === 'profile') {
-                document.getElementById('profile-view').style.display = 'block';
-                document.getElementById('nav-profile').classList.add('active');
-                updateProfileStats(); // Refresh stats when opening tab
-            }
-        }
-
-        // --- Profile Logic ---
-        function loadProfileUI() {
-            document.getElementById('profile-name').innerText = userProfile.name;
-            document.getElementById('profile-loc').innerText = userProfile.location;
-            document.getElementById('profile-initial').innerText = userProfile.name.charAt(0).toUpperCase();
-        }
-
-        function editProfile() {
-            const newName = prompt("Enter your name:", userProfile.name);
-            if(newName) {
-                const newLoc = prompt("Enter your location:", userProfile.location);
-                userProfile.name = newName;
-                userProfile.location = newLoc || userProfile.location;
-                localStorage.setItem('strava_profile', JSON.stringify(userProfile));
-                loadProfileUI();
-            }
-        }
-
-        function updateProfileStats() {
-            let totalDist = 0;
-            let totalTime = 0;
-
-            runs.forEach(r => {
-                totalDist += r.distance;
-                totalTime += r.seconds;
+            ['home', 'record', 'profile'].forEach(t => {
+                document.getElementById(`${t}-view`).style.display = (t === tab) ? (tab === 'record' ? 'flex' : 'block') : 'none';
+                document.getElementById(`nav-${t}`).classList.toggle('active', t === tab);
             });
+            document.getElementById('manual-add-btn').style.display = (tab === 'home') ? 'block' : 'none';
 
-            // All Time Stats
-            document.getElementById('all-time-km').innerText = totalDist.toFixed(1);
-            document.getElementById('total-activities').innerText = runs.length;
-            document.getElementById('shoe-km').innerText = Math.floor(totalDist);
-
-            const hrs = Math.floor(totalTime / 3600);
-            const mins = Math.floor((totalTime % 3600) / 60);
-            document.getElementById('all-time-hours').innerText = `${hrs}h ${mins}m`;
-
-            // Avg Pace
-            if (totalDist > 0) {
-                const paceSecs = totalTime / totalDist;
-                document.getElementById('all-time-pace').innerText = formatTime(paceSecs, true) + " /km";
-            } else {
-                document.getElementById('all-time-pace').innerText = "--:-- /km";
-            }
+            if (tab === 'record') setTimeout(initLiveMap, 100);
+            if (tab === 'profile') loadProfileUI();
         }
 
-        function resetData() {
-            if(confirm("Are you sure? This will delete all your runs.")) {
-                localStorage.removeItem('strava_runs_v2');
-                location.reload();
-            }
-        }
-
-        // --- Tracking Logic (Same as before) ---
+        // --- Tracking ---
         function initLiveMap() {
             if (mapInstance) return;
             mapInstance = L.map('live-map').setView([0, 0], 2);
@@ -458,70 +344,33 @@
             isRunning = true;
             toggleButtons('running');
             document.getElementById('gps-status').innerText = "Locating...";
-
+            
             timerInterval = setInterval(() => { totalSeconds++; updateDashboard(); }, 1000);
 
             watchId = navigator.geolocation.watchPosition(
                 (pos) => {
                     const lat = pos.coords.latitude, lng = pos.coords.longitude;
-                    const accuracy = pos.coords.accuracy;
-                    document.getElementById('gps-status').innerText = `Recording (±${Math.round(accuracy)}m)`;
-
+                    document.getElementById('gps-status').innerText = `Recording (±${Math.round(pos.coords.accuracy)}m)`;
                     if (pathCoordinates.length > 0) {
-                        const lastPt = pathCoordinates[pathCoordinates.length - 1];
-                        const dist = calculateDistance(lastPt[0], lastPt[1], lat, lng);
-                        if (dist > 0.005) { // 5m filter
-                            totalDistance += dist;
-                            pathCoordinates.push([lat, lng]);
-                            updatePolyline();
-                        }
+                        const last = pathCoordinates[pathCoordinates.length-1];
+                        const dist = calcDist(last[0], last[1], lat, lng);
+                        if (dist > 0.005) { totalDistance += dist; pathCoordinates.push([lat, lng]); updateMapLine(); }
                     } else {
-                        pathCoordinates.push([lat, lng]);
-                        mapInstance.setView([lat, lng], 16);
-                        L.circleMarker([lat, lng], {radius: 6, color: 'green', fillOpacity:1}).addTo(mapInstance);
+                        pathCoordinates.push([lat, lng]); mapInstance.setView([lat, lng], 16);
+                        L.circleMarker([lat, lng], {radius: 6, color: 'green'}).addTo(mapInstance);
                     }
-                },
-                (err) => console.error(err), { enableHighAccuracy: true }
+                }, err => console.error(err), { enableHighAccuracy: true }
             );
         }
 
-        function updatePolyline() { if(polyline) { polyline.setLatLngs(pathCoordinates); mapInstance.setView(pathCoordinates[pathCoordinates.length - 1]); }}
+        function updateMapLine() { if(polyline) { polyline.setLatLngs(pathCoordinates); mapInstance.setView(pathCoordinates[pathCoordinates.length-1]); }}
         function pauseRun() { isRunning = false; clearInterval(timerInterval); navigator.geolocation.clearWatch(watchId); toggleButtons('paused'); }
         function resumeRun() { startRun(); }
         
-        function finishRun() {
-            const run = {
-                id: Date.now(),
-                title: getTimeBasedGreeting() + " Run",
-                date: new Date().toISOString(),
-                distance: totalDistance,
-                seconds: totalSeconds,
-                path: pathCoordinates
-            };
-            runs.unshift(run);
-            localStorage.setItem('strava_runs_v2', JSON.stringify(runs));
-            resetTracker();
-            switchTab('home');
-            renderFeed();
-            updateStats();
-        }
-
-        function resetTracker() {
-            totalSeconds = 0; totalDistance = 0; pathCoordinates = []; isRunning = false;
-            clearInterval(timerInterval); navigator.geolocation.clearWatch(watchId);
-            if(polyline) polyline.setLatLngs([]);
-            if(mapInstance) { mapInstance.remove(); mapInstance = null; }
-            updateDashboard(); toggleButtons('idle');
-            document.getElementById('gps-status').innerText = "Ready";
-        }
-
         function updateDashboard() {
             document.getElementById('timer').innerText = formatTime(totalSeconds);
             document.getElementById('live-dist').innerText = totalDistance.toFixed(2);
-            if (totalDistance > 0.05) {
-                const paceSeconds = totalSeconds / totalDistance;
-                document.getElementById('live-pace').innerText = formatTime(paceSeconds, true);
-            }
+            if(totalDistance > 0.05) document.getElementById('live-pace').innerText = formatTime(totalSeconds/totalDistance, true);
         }
 
         function toggleButtons(state) {
@@ -531,87 +380,216 @@
             document.getElementById('resume-btn').style.display = state === 'paused' ? 'block' : 'none';
         }
 
-        // --- Feed & Map Modal ---
+        // --- Save Logic ---
+        function openManualEntry() {
+            isManualEntry = true;
+            document.getElementById('manual-fields').style.display = 'block';
+            document.getElementById('save-dist-display').style.display = 'none';
+            populateShoeSelect();
+            document.getElementById('save-modal').style.display = 'flex';
+        }
+
+        function openFinishModal() {
+            isManualEntry = false;
+            document.getElementById('manual-fields').style.display = 'none';
+            document.getElementById('save-dist-display').style.display = 'block';
+            document.getElementById('save-dist-display').innerText = totalDistance.toFixed(2) + " km";
+            document.getElementById('save-title').value = getTimeGreeting() + " Run";
+            populateShoeSelect();
+            document.getElementById('save-modal').style.display = 'flex';
+        }
+
+        function closeSaveModal() { document.getElementById('save-modal').style.display = 'none'; }
+
+        function populateShoeSelect() {
+            const select = document.getElementById('save-shoe');
+            select.innerHTML = '';
+            profile.gear.forEach(shoe => {
+                const opt = document.createElement('option');
+                opt.value = shoe.id;
+                opt.text = shoe.name;
+                select.appendChild(opt);
+            });
+        }
+
+        function confirmSave() {
+            const title = document.getElementById('save-title').value;
+            const desc = document.getElementById('save-desc').value;
+            const shoeId = parseInt(document.getElementById('save-shoe').value);
+            
+            let dist, secs;
+
+            if (isManualEntry) {
+                dist = parseFloat(document.getElementById('manual-dist-input').value) || 0;
+                secs = parseFloat(document.getElementById('manual-time-input').value) * 60 || 0;
+            } else {
+                dist = totalDistance;
+                secs = totalSeconds;
+            }
+
+            if (dist === 0) return alert("Distance cannot be 0");
+
+            const run = {
+                id: Date.now(),
+                title: title || "Run",
+                desc: desc,
+                date: new Date().toISOString(),
+                distance: dist,
+                seconds: secs,
+                shoeId: shoeId,
+                path: isManualEntry ? [] : pathCoordinates
+            };
+
+            // Update Shoe Mileage
+            const shoe = profile.gear.find(g => g.id === shoeId);
+            if(shoe) shoe.dist += dist;
+            saveProfile();
+
+            // Save Run
+            runs.unshift(run);
+            localStorage.setItem('strava_runs_v3', JSON.stringify(runs));
+
+            closeSaveModal();
+            resetTracker();
+            switchTab('home');
+            renderFeed();
+            updateStats();
+        }
+
+        function resetTracker() {
+            totalSeconds = 0; totalDistance = 0; pathCoordinates = []; isRunning = false;
+            clearInterval(timerInterval); navigator.geolocation.clearWatch(watchId);
+            if(mapInstance) { mapInstance.remove(); mapInstance = null; }
+            toggleButtons('idle');
+            updateDashboard();
+        }
+
+        // --- Profile Logic ---
+        function loadProfileUI() {
+            document.getElementById('profile-name').innerText = profile.name;
+            if(profile.photo) {
+                document.getElementById('profile-img').src = profile.photo;
+                document.getElementById('profile-img').style.display = 'block';
+                document.getElementById('profile-initial').style.display = 'none';
+            }
+
+            // Stats
+            let totalKm = 0;
+            runs.forEach(r => totalKm += r.distance);
+            document.getElementById('all-time-km').innerText = totalKm.toFixed(1);
+            document.getElementById('all-time-runs').innerText = runs.length;
+
+            // Gear List
+            const container = document.getElementById('gear-container');
+            container.innerHTML = '';
+            profile.gear.forEach(shoe => {
+                container.innerHTML += `
+                <div class="gear-item">
+                    <div class="gear-icon">👟</div>
+                    <div style="flex:1;">
+                        <div style="font-weight:bold;">${shoe.name}</div>
+                        <div style="color:var(--text-gray); font-size:0.9rem;">${shoe.dist.toFixed(1)} km</div>
+                    </div>
+                </div>`;
+            });
+        }
+
+        function handleAvatarUpload(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    profile.photo = e.target.result; // Save base64
+                    saveProfile();
+                    loadProfileUI();
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function addShoe() {
+            const name = prompt("Shoe Name (e.g. Nike Pegasus):");
+            if(name) {
+                profile.gear.push({ id: Date.now(), name: name, dist: 0 });
+                saveProfile();
+                loadProfileUI();
+            }
+        }
+
+        function saveProfile() { localStorage.setItem('strava_profile_v3', JSON.stringify(profile)); }
+
+        // --- Feed ---
         function renderFeed() {
             const container = document.getElementById('feed-container');
             container.innerHTML = '';
-            if (runs.length === 0) { container.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">No runs yet.</p>'; return; }
+            if (runs.length === 0) return container.innerHTML = '<p style="text-align:center; padding:20px; color:#999;">No runs yet.</p>';
 
             runs.forEach(run => {
-                const date = new Date(run.date);
-                const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' });
+                const date = new Date(run.date).toLocaleDateString('en-US', {month:'short', day:'numeric'});
+                const shoeName = profile.gear.find(g => g.id === run.shoeId)?.name || "";
                 const hasMap = run.path && run.path.length > 0;
-                const pace = run.distance > 0 ? formatTime(run.seconds/run.distance, true) : "--:--";
                 
-                const html = `
+                let html = `
                 <div class="activity">
                     <div class="user-header">
-                        <div class="avatar">${userProfile.name.charAt(0)}</div>
-                        <div class="activity-meta"><h3>${userProfile.name}</h3><span>${dateStr}</span></div>
+                        <div class="avatar-small">
+                             ${profile.photo ? `<img src="${profile.photo}">` : profile.name.charAt(0)}
+                        </div>
+                        <div>
+                            <h3 style="font-size:0.95rem;">${profile.name}</h3>
+                            <span style="font-size:0.75rem; color:gray;">${date}</span>
+                        </div>
                     </div>
-                    <h2 style="font-size:1.1rem; margin-bottom:5px;">${run.title}</h2>
+                    <h2 style="font-size:1.1rem;">${run.title}</h2>
+                    ${run.desc ? `<p style="font-size:0.9rem; color:#444; margin-bottom:5px;">${run.desc}</p>` : ''}
                     <div class="run-stats">
                         <div class="run-stat"><label>Distance</label>${run.distance.toFixed(2)} km</div>
-                        <div class="run-stat"><label>Pace</label>${pace} /km</div>
+                        <div class="run-stat"><label>Pace</label>${formatTime(run.seconds/run.distance, true)} /km</div>
                         <div class="run-stat"><label>Time</label>${formatTime(run.seconds)}</div>
                     </div>
-                    ${hasMap ? `<button class="btn-map" onclick="openHistoryMap(${run.id})">🗺️ View Route</button>` : ''}
+                    ${shoeName ? `<span class="shoe-tag">👟 ${shoeName}</span>` : ''}
+                    ${hasMap ? `<button class="btn-map" onclick="viewMap(${run.id})">🗺️ View Map</button>` : ''}
                 </div>`;
                 container.innerHTML += html;
             });
         }
 
-        function openHistoryMap(runId) {
-            const run = runs.find(r => r.id === runId);
-            if (!run || !run.path) return;
+        function viewMap(id) {
+            const run = runs.find(r => r.id === id);
             document.getElementById('map-modal').style.display = 'flex';
             setTimeout(() => {
-                if (historyMapInstance) historyMapInstance.remove();
+                if(historyMapInstance) historyMapInstance.remove();
                 historyMapInstance = L.map('history-map');
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(historyMapInstance);
-                const line = L.polyline(run.path, {color: '#fc4c02', weight: 5}).addTo(historyMapInstance);
+                const line = L.polyline(run.path, {color:'#fc4c02', weight:5}).addTo(historyMapInstance);
                 historyMapInstance.fitBounds(line.getBounds());
             }, 100);
         }
 
-        function closeMapModal() { document.getElementById('map-modal').style.display = 'none'; }
-
         // --- Helpers ---
         function updateStats() {
-            let d = 0, t = 0;
+            let d=0, t=0;
             runs.forEach(r => { d += r.distance; t += r.seconds; });
             document.getElementById('weekly-km').innerText = d.toFixed(1);
             document.getElementById('weekly-runs').innerText = runs.length;
-            const hrs = Math.floor(t / 3600);
-            const mins = Math.floor((t % 3600) / 60);
-            document.getElementById('weekly-time').innerText = `${hrs}h ${mins}m`;
+            document.getElementById('weekly-time').innerText = Math.floor(t/3600) + "h " + Math.floor((t%3600)/60) + "m";
         }
-
-        function formatTime(totalSecs, isPace = false) {
-            if (!totalSecs) return "00:00";
-            totalSecs = Math.round(totalSecs);
-            const hrs = Math.floor(totalSecs / 3600);
-            const mins = Math.floor((totalSecs % 3600) / 60);
-            const secs = totalSecs % 60;
-            const m = mins.toString().padStart(2, '0');
-            const s = secs.toString().padStart(2, '0');
-            if (isPace) return `${mins}:${s}`;
-            if (hrs > 0) return `${hrs}:${m}:${s}`;
-            return `${m}:${s}`;
-        }
-
-        function calculateDistance(lat1, lon1, lat2, lon2) {
+        function calcDist(lat1, lon1, lat2, lon2) {
             const R = 6371; 
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            const dLat = (lat2-lat1) * Math.PI/180;
+            const dLon = (lon2-lon1) * Math.PI/180;
+            const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
             return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
         }
-
-        function getTimeBasedGreeting() {
-            const h = new Date().getHours();
-            return h < 12 ? "Morning" : h < 18 ? "Afternoon" : "Evening";
+        function formatTime(s, pace=false) {
+            if(!s || s===Infinity) return "00:00";
+            s = Math.round(s);
+            const m = Math.floor((s%3600)/60).toString().padStart(2,'0');
+            const sec = (s%60).toString().padStart(2,'0');
+            if(pace) return `${Math.floor(s/60)}:${sec}`;
+            return (Math.floor(s/3600)>0 ? Math.floor(s/3600)+":" : "") + `${m}:${sec}`;
         }
+        function getTimeGreeting() { const h = new Date().getHours(); return h<12?"Morning":h<18?"Afternoon":"Evening"; }
+        function resetData() { if(confirm("Clear all data?")) { localStorage.clear(); location.reload(); } }
     </script>
 </body>
 </html>
