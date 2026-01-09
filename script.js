@@ -9,13 +9,16 @@ let profile = JSON.parse(localStorage.getItem('strava_profile_v3')) || {
 // Runtime variables
 let timerInterval, totalSeconds = 0, isRunning = false;
 let watchId = null, mapInstance = null, polyline = null;
-let pathCoordinates = []; // Format: [lat, lng, alt, time]
-let totalDistance = 0; // km
-let elevationGain = 0; // meters
+let pathCoordinates = []; 
+let totalDistance = 0; 
+let elevationGain = 0; 
 let lastAltitude = null;
 let historyMapInstance = null;
 let isManualEntry = false;
 let currentRunIdForExport = null;
+
+// NEW: Tracking which run is being edited
+let editingRunId = null;
 
 // --- Initialization ---
 window.onload = function() {
@@ -26,21 +29,19 @@ window.onload = function() {
 
 // --- Navigation ---
 function switchTab(tab) {
-    // Hide all views
     document.getElementById('home-view').style.display = 'none';
     document.getElementById('tracker-view').style.display = 'none';
     document.getElementById('profile-view').style.display = 'none';
     
-    // Reset Nav Active States
     document.getElementById('nav-home').classList.remove('active');
     document.getElementById('nav-record').classList.remove('active');
     document.getElementById('nav-profile').classList.remove('active');
 
-    // Show Selected View
     if (tab === 'home') {
         document.getElementById('home-view').style.display = 'block';
         document.getElementById('nav-home').classList.add('active');
         document.getElementById('manual-add-btn').style.display = 'block';
+        renderFeed(); // Re-render to ensure edits show up
     } else if (tab === 'record') {
         document.getElementById('tracker-view').style.display = 'flex';
         document.getElementById('nav-record').classList.add('active');
@@ -63,11 +64,11 @@ function initLiveMap() {
 }
 
 function startRun() {
-    if (!navigator.geolocation) return alert("GPS not supported on this device.");
+    if (!navigator.geolocation) return alert("GPS not supported.");
     
     isRunning = true;
     toggleButtons('running');
-    document.getElementById('gps-status').innerText = "Locating Satellites...";
+    document.getElementById('gps-status').innerText = "Locating...";
     
     timerInterval = setInterval(() => { totalSeconds++; updateDashboard(); }, 1000);
 
@@ -77,47 +78,33 @@ function startRun() {
             const lat = pos.coords.latitude;
             const lng = pos.coords.longitude;
             const alt = pos.coords.altitude || 0;
-            const accuracy = pos.coords.accuracy;
 
-            document.getElementById('gps-status').innerText = `Recording (±${Math.round(accuracy)}m)`;
+            document.getElementById('gps-status').innerText = `Recording (±${Math.round(pos.coords.accuracy)}m)`;
             
             if (pathCoordinates.length > 0) {
                 const last = pathCoordinates[pathCoordinates.length-1];
                 const dist = calcDist(last[0], last[1], lat, lng);
                 
-                // Filter small movements (noise) < 5 meters
                 if (dist > 0.005) { 
                     totalDistance += dist; 
-                    
-                    // Elevation Logic (Only add positive gain)
-                    if (lastAltitude !== null && alt > lastAltitude) {
-                        elevationGain += (alt - lastAltitude);
-                    }
+                    if (lastAltitude !== null && alt > lastAltitude) elevationGain += (alt - lastAltitude);
                     lastAltitude = alt;
-
-                    // Push [Lat, Lng, Alt, Time]
                     pathCoordinates.push([lat, lng, alt, new Date().toISOString()]); 
                     updateMapLine(); 
                 }
             } else {
-                // First point
                 pathCoordinates.push([lat, lng, alt, new Date().toISOString()]);
                 lastAltitude = alt;
                 mapInstance.setView([lat, lng], 16);
                 L.circleMarker([lat, lng], {radius: 6, color: 'green', fillOpacity: 1}).addTo(mapInstance);
             }
         }, 
-        (err) => {
-            console.error(err);
-            document.getElementById('gps-status').innerText = "GPS Signal Lost";
-        }, 
-        options
+        (err) => console.error(err), options
     );
 }
 
 function updateMapLine() { 
     if(polyline) { 
-        // Leaflet only needs [lat, lng], map our 4-point array to 2-point
         const simplePath = pathCoordinates.map(p => [p[0], p[1]]);
         polyline.setLatLngs(simplePath); 
         mapInstance.setView(simplePath[simplePath.length-1]); 
@@ -137,10 +124,8 @@ function resumeRun() { startRun(); }
 function updateDashboard() {
     document.getElementById('timer').innerText = formatTime(totalSeconds);
     document.getElementById('live-dist').innerText = totalDistance.toFixed(2);
-    document.getElementById('live-elev').innerText = Math.round(elevationGain); // Show elevation
-    if(totalDistance > 0.05) {
-        document.getElementById('live-pace').innerText = formatTime(totalSeconds/totalDistance, true);
-    }
+    document.getElementById('live-elev').innerText = Math.round(elevationGain);
+    if(totalDistance > 0.05) document.getElementById('live-pace').innerText = formatTime(totalSeconds/totalDistance, true);
 }
 
 function toggleButtons(state) {
@@ -157,23 +142,66 @@ function toggleButtons(state) {
     }
 }
 
-// --- Data Saving ---
+// --- Data Saving & Editing ---
+
+// 1. Open Modal for Manual Entry
 function openManualEntry() {
     isManualEntry = true;
+    editingRunId = null; // New Run
+    document.getElementById('modal-title').innerText = "Manual Entry";
     document.getElementById('manual-fields').style.display = 'block';
     document.getElementById('save-dist-display').style.display = 'none';
+    
+    // Clear fields
+    document.getElementById('manual-dist-input').value = '';
+    document.getElementById('manual-time-input').value = '';
+    document.getElementById('save-title').value = "Run";
+    document.getElementById('save-desc').value = "";
+    
     populateShoeSelect();
     document.getElementById('save-modal').style.display = 'flex';
 }
 
+// 2. Open Modal for Finishing a GPS Run
 function openFinishModal() {
     isManualEntry = false;
+    editingRunId = null; // New Run
+    document.getElementById('modal-title').innerText = "Save Activity";
     document.getElementById('manual-fields').style.display = 'none';
     document.getElementById('save-dist-display').style.display = 'block';
     document.getElementById('save-dist-display').innerText = totalDistance.toFixed(2) + " km";
     document.getElementById('save-title').value = getTimeGreeting() + " Run";
+    document.getElementById('save-desc').value = "";
     populateShoeSelect();
     document.getElementById('save-modal').style.display = 'flex';
+}
+
+// 3. Open Modal for EDITING an Existing Run
+function openEditModal(runId) {
+    const run = runs.find(r => r.id === runId);
+    if(!run) return;
+
+    editingRunId = runId; // Mark as editing mode
+    isManualEntry = false; // We use standard fields, but won't allow editing distance on GPS runs usually
+
+    document.getElementById('modal-title').innerText = "Edit Activity";
+    document.getElementById('save-modal').style.display = 'flex';
+    
+    // Populate fields
+    document.getElementById('save-title').value = run.title;
+    document.getElementById('save-desc').value = run.desc || "";
+    
+    // Setup Shoe Select
+    populateShoeSelect();
+    document.getElementById('save-shoe').value = run.shoeId;
+
+    // Handle Distance Display
+    document.getElementById('save-dist-display').style.display = 'block';
+    document.getElementById('save-dist-display').innerText = run.distance.toFixed(2) + " km";
+    document.getElementById('manual-fields').style.display = 'none';
+
+    // Note: To simplify, we only allow editing Title, Desc, and Shoe for now. 
+    // Editing distance/time of valid GPS runs is usually disabled in Strava too.
 }
 
 function closeSaveModal() { document.getElementById('save-modal').style.display = 'none'; }
@@ -189,13 +217,48 @@ function populateShoeSelect() {
     });
 }
 
+// 4. Save Logic (Handles New and Edits)
 function confirmSave() {
     const title = document.getElementById('save-title').value;
     const desc = document.getElementById('save-desc').value;
     const shoeId = parseInt(document.getElementById('save-shoe').value);
     
-    let dist, secs;
+    // CASE A: UPDATE EXISTING RUN
+    if (editingRunId) {
+        const runIndex = runs.findIndex(r => r.id === editingRunId);
+        if (runIndex > -1) {
+            const oldRun = runs[runIndex];
+            const oldShoeId = oldRun.shoeId;
+            const dist = oldRun.distance;
 
+            // Update Run Details
+            runs[runIndex].title = title;
+            runs[runIndex].desc = desc;
+            runs[runIndex].shoeId = shoeId;
+
+            // Handle Shoe Mileage Math (If shoe changed)
+            if (oldShoeId !== shoeId) {
+                // Remove from old shoe
+                const oldShoe = profile.gear.find(g => g.id === oldShoeId);
+                if (oldShoe) oldShoe.dist = Math.max(0, oldShoe.dist - dist);
+                
+                // Add to new shoe
+                const newShoe = profile.gear.find(g => g.id === shoeId);
+                if (newShoe) newShoe.dist += dist;
+                
+                saveProfile();
+            }
+
+            localStorage.setItem('strava_runs_v3', JSON.stringify(runs));
+            closeSaveModal();
+            renderFeed(); // Re-render feed to show changes
+            editingRunId = null;
+            return;
+        }
+    }
+
+    // CASE B: CREATE NEW RUN
+    let dist, secs;
     if (isManualEntry) {
         dist = parseFloat(document.getElementById('manual-dist-input').value) || 0;
         secs = parseFloat(document.getElementById('manual-time-input').value) * 60 || 0;
@@ -218,12 +281,11 @@ function confirmSave() {
         path: isManualEntry ? [] : pathCoordinates
     };
 
-    // Update Shoe Mileage
+    // Add mileage to shoe
     const shoe = profile.gear.find(g => g.id === shoeId);
     if(shoe) shoe.dist += dist;
     saveProfile();
 
-    // Save Run
     runs.unshift(run);
     localStorage.setItem('strava_runs_v3', JSON.stringify(runs));
 
@@ -280,13 +342,24 @@ function loadProfileUI() {
     });
 }
 
+function editProfileName() {
+    const newName = prompt("Enter your name:", profile.name);
+    if(newName && newName.trim() !== "") {
+        profile.name = newName;
+        saveProfile();
+        loadProfileUI();
+        renderFeed(); // Update feed to show new name on cards
+    }
+}
+
 function handleAvatarUpload(input) {
     if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
-            profile.photo = e.target.result; // Save base64 string
+            profile.photo = e.target.result;
             saveProfile();
             loadProfileUI();
+            renderFeed();
         }
         reader.readAsDataURL(input.files[0]);
     }
@@ -316,6 +389,8 @@ function renderFeed() {
         
         let html = `
         <div class="activity">
+            <div class="btn-edit-activity" onclick="openEditModal(${run.id})">✎</div>
+            
             <div class="user-header">
                 <div class="avatar-small">
                      ${profile.photo ? `<img src="${profile.photo}">` : profile.name.charAt(0)}
@@ -350,15 +425,12 @@ function viewMap(id) {
         historyMapInstance = L.map('history-map');
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(historyMapInstance);
         
-        // Map 4-point data [lat, lng, alt, time] back to 2-point [lat, lng] for Leaflet display
         const simplePath = run.path.map(p => [p[0], p[1]]);
-        
         const line = L.polyline(simplePath, {color:'#fc4c02', weight:5}).addTo(historyMapInstance);
         historyMapInstance.fitBounds(line.getBounds());
     }, 100);
 }
 
-// --- EXPORT GPX ---
 function exportGPX() {
     if(!currentRunIdForExport) return;
     const run = runs.find(r => r.id === currentRunIdForExport);
@@ -398,7 +470,6 @@ function exportGPX() {
     document.body.removeChild(a);
 }
 
-// --- Helpers ---
 function updateStats() {
     let d=0, t=0;
     runs.forEach(r => { d += r.distance; t += r.seconds; });

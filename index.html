@@ -59,7 +59,8 @@
                     <img id="profile-img">
                 </div>
                 <div class="profile-name" id="profile-name">Runner</div>
-                <div class="profile-sub">Tap photo to edit</div>
+                
+                <button class="btn-small-outline" onclick="editProfileName()">Edit Details</button>
             </div>
             
             <div style="padding: 15px;">
@@ -82,7 +83,7 @@
 
     <div id="save-modal" class="modal">
         <div class="modal-header">
-            <h3>Save Activity</h3>
+            <h3 id="modal-title">Save Activity</h3>
             <span onclick="closeSaveModal()" class="close-btn">✕</span>
         </div>
         <div class="modal-content">
