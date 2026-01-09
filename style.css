@@ -28,34 +28,15 @@ header {
     border-bottom: 1px solid var(--border);
     position: sticky; top: 0; z-index: 1000;
     display: flex; justify-content: center; align-items: center;
-    height: 60px; /* Fixed height for calculations */
+    height: 60px;
 }
-
-header h1 {
-    color: var(--primary); font-size: 1.5rem; font-weight: 800; font-style: italic;
-}
-
-.header-btn-right {
-    position: absolute; right: 15px;
-    color: var(--primary); font-size: 1.5rem; cursor: pointer;
-}
+header h1 { color: var(--primary); font-size: 1.5rem; font-weight: 800; font-style: italic; }
+.header-btn-right { position: absolute; right: 15px; color: var(--primary); font-size: 1.5rem; cursor: pointer; }
 
 /* Views */
-main {
-    flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 80px; display: none;
-}
+main { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 80px; display: none; }
 #home-view { display: block; }
-
-/* FIX: Tracker View now accounts for Nav Bar height */
-#tracker-view { 
-    display: none; 
-    flex-direction: column; 
-    height: 100%; 
-    background: white; 
-    padding: 0; 
-    padding-bottom: 70px; /* Crucial Fix: Space for Navbar */
-}
-
+#tracker-view { display: none; flex-direction: column; height: 100%; background: white; padding: 0; padding-bottom: 70px; }
 #profile-view { display: none; }
 
 /* Components */
@@ -64,132 +45,70 @@ main {
     padding: 15px; margin-bottom: 15px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
-
 .sub-header { font-size: 0.9rem; margin-bottom: 10px; color: var(--text-gray); }
-.section-title { font-size: 1rem; margin: 20px 0 10px; }
+.section-title { font-size: 1rem; margin: 20px 0 10px; font-weight: bold; }
 
 /* Stats */
-.stat-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr);
-    gap: 10px; text-align: center;
-}
+.stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; }
 .stat-value { font-size: 1.2rem; font-weight: bold; }
 .stat-label { font-size: 0.8rem; color: var(--text-gray); }
 
-/* Feed */
-.activity {
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 15px; margin-bottom: 15px;
-    position: relative;
+/* Best Efforts Table */
+.effort-row {
+    display: flex; justify-content: space-between;
+    padding: 10px 0; border-bottom: 1px solid #eee;
+    font-size: 0.9rem;
 }
-.activity:last-child { border: none; margin: 0; padding-bottom: 0; }
+.effort-row:last-child { border-bottom: none; }
+.effort-row div { flex: 1; }
 
-/* Edit Button on Activity Card */
-.btn-edit-activity {
-    position: absolute; top: 0; right: 0;
-    font-size: 1.2rem; cursor: pointer; color: var(--text-gray);
-    padding: 5px;
-}
-
-.user-header { display: flex; align-items: center; margin-bottom: 10px; }
-.avatar-small {
-    width: 40px; height: 40px; background: var(--dark);
-    border-radius: 50%; margin-right: 10px;
-    overflow: hidden; display: flex; align-items: center; justify-content: center;
-    color: white; font-weight: bold;
-}
-.avatar-small img { width: 100%; height: 100%; object-fit: cover; }
-
+/* Feed / Activities */
+.activity { position: relative; } /* Styles moved inline in JS for cleaner cards in this iteration */
 .run-stats { display: flex; justify-content: space-between; margin-top: 10px; }
 .run-stat div { font-size: 1.1rem; font-weight: 600; }
 .run-stat label { font-size: 0.75rem; color: var(--text-gray); display: block; }
 
-.shoe-tag { font-size: 0.75rem; color: var(--text-gray); margin-top: 5px; display: block;}
-
-/* Buttons */
-.btn-map {
-    margin-top: 15px; width: 100%; padding: 8px;
-    background: white; border: 1px solid var(--primary); color: var(--primary);
-    border-radius: 4px; font-weight: bold; cursor: pointer;
-}
-
+/* Buttons & Controls */
+.btn-map { margin-top: 15px; width: 100%; padding: 8px; background: white; border: 1px solid var(--primary); color: var(--primary); border-radius: 4px; font-weight: bold; cursor: pointer; }
 .text-btn { color:var(--primary); background:none; border:none; font-weight:bold; cursor: pointer; }
 .btn-danger { width:100%; padding:10px; color:red; background:white; border:1px solid #ddd; margin-top:20px; border-radius: 4px; cursor: pointer;}
-.btn-full {
-    width: 100%; padding: 15px; background: var(--primary); color: white;
-    border: none; border-radius: 4px; font-weight: bold; font-size: 1rem; margin-top: 20px; cursor: pointer;
-}
+.btn-full { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 4px; font-weight: bold; font-size: 1rem; margin-top: 20px; cursor: pointer; }
+.btn-small-outline { margin-top: 5px; padding: 4px 12px; font-size: 0.8rem; border: 1px solid #ccc; background: white; border-radius: 15px; cursor: pointer; }
 
-/* Edit Profile Button */
-.btn-small-outline {
-    margin-top: 5px; padding: 4px 12px; font-size: 0.8rem;
-    border: 1px solid #ccc; background: white; border-radius: 15px; cursor: pointer;
-}
-
-/* Tracker Specifics */
+/* Tracker Controls */
 #live-map { flex: 1; width: 100%; background: #eee; }
 .tracker-controls-container { padding: 20px; background: white; border-top: 1px solid #ddd; z-index: 500; }
 #gps-status { text-align:center; font-size:0.8rem; color:var(--text-gray); margin-bottom:5px; }
 .timer-display { font-size: 3.5rem; font-weight: 200; text-align: center; font-variant-numeric: tabular-nums; margin-bottom: 15px; }
-
 .controls { display: flex; gap: 20px; justify-content: center; }
-.circle-btn {
-    width: 70px; height: 70px; border-radius: 50%; border: none;
-    color: white; font-size: 0.9rem; font-weight: bold; cursor: pointer;
-    display: none; /* Controlled by JS */
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2); /* Added shadow for visibility */
-}
+.circle-btn { width: 70px; height: 70px; border-radius: 50%; border: none; color: white; font-size: 0.9rem; font-weight: bold; cursor: pointer; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
 .btn-start { background: var(--primary); display: block; }
 .btn-stop { background: var(--dark); }
 .btn-resume { background: #4CAF50; }
 .btn-finish { background: #E91E63; }
 
 /* Profile */
-.profile-header {
-    display: flex; flex-direction: column; align-items: center;
-    padding: 20px 0; background: var(--light);
-    border-bottom: 1px solid var(--border);
-    margin: -15px -15px 15px -15px;
-}
-.profile-avatar {
-    width: 80px; height: 80px; background: var(--dark); color: white;
-    border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    font-size: 2rem; margin-bottom: 10px; position: relative;
-    overflow: hidden; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); cursor: pointer;
-}
+.profile-header { display: flex; flex-direction: column; align-items: center; padding: 20px 0; background: var(--light); border-bottom: 1px solid var(--border); margin: -15px -15px 15px -15px; }
+.profile-avatar { width: 80px; height: 80px; background: var(--dark); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin-bottom: 10px; position: relative; overflow: hidden; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); cursor: pointer; }
 .profile-avatar img { width: 100%; height: 100%; object-fit: cover; display: none; }
 .profile-name { font-size: 1.3rem; font-weight: bold; }
+.profile-sub { color: var(--text-gray); font-size: 0.9rem; margin: 5px 0 10px; }
 #avatar-input { display: none; }
-
 .gear-item { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
 .gear-icon { font-size: 1.5rem; margin-right: 15px; }
 
 /* Modals */
-.modal {
-    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: white; z-index: 2000; flex-direction: column;
-}
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 2000; flex-direction: column; }
 .modal-content { padding: 20px; overflow-y: auto; flex: 1;}
-.modal-header {
-    padding: 15px; background: var(--light); display: flex; justify-content: space-between;
-    align-items: center; border-bottom: 1px solid #ddd;
-}
+.modal-header { padding: 15px; background: var(--light); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; }
 .close-btn { font-size: 1.5rem; cursor: pointer; }
-
 #save-dist-display { text-align:center; font-size:2rem; margin:10px 0; }
 #manual-fields { display: none; }
-
 label { display: block; margin-top: 15px; font-weight: bold; font-size: 0.9rem; }
-input, select, textarea {
-    width: 100%; padding: 12px; margin-top: 5px;
-    border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;
-}
+input, select, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; }
 
 /* Navbar */
-nav {
-    position: fixed; bottom: 0; width: 100%; background: var(--light);
-    display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #ddd; z-index: 1000;
-}
+nav { position: fixed; bottom: 0; width: 100%; background: var(--light); display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #ddd; z-index: 1000; }
 .nav-item { text-align: center; color: var(--text-gray); font-size: 0.7rem; cursor: pointer; }
 .nav-item.active { color: var(--primary); }
 .nav-icon { font-size: 1.5rem; display: block; margin-bottom: 2px; }

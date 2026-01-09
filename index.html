@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RunStrava Pro</title>
+    <title>Solo Runner</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="style.css">
 </head>
@@ -23,8 +23,9 @@
                 <div><div class="stat-value" id="weekly-runs">0</div><div class="stat-label">runs</div></div>
             </div>
         </div>
-        <h3 class="section-title">Feed</h3>
-        <div id="feed-container" class="card"></div>
+
+        <h3 class="section-title">History</h3>
+        <div id="feed-container" class="card" style="background:transparent; box-shadow:none; padding:0;"></div>
     </main>
 
     <div id="tracker-view">
@@ -56,10 +57,8 @@
                 </div>
                 <div class="profile-name" id="profile-name">Runner</div>
                 <div class="profile-sub" id="profile-location">Location</div>
-                
                 <button class="btn-small-outline" onclick="openProfileModal()">Edit Details</button>
             </div>
-            
             <div style="padding: 15px;">
                 <div class="stat-grid">
                     <div><div class="stat-value" id="all-time-runs">0</div><div class="stat-label">Activities</div></div>
@@ -67,7 +66,6 @@
                 </div>
             </div>
         </div>
-
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
             <h3 class="section-title" style="margin:0;">My Gear</h3>
             <button onclick="addShoe()" class="text-btn">+ Add Shoe</button>
@@ -75,6 +73,40 @@
         <div class="card" id="gear-container" style="margin-top:10px;"></div>
         <button onclick="resetData()" class="btn-danger">Reset All Data</button>
     </main>
+
+    <div id="activity-detail-modal" class="modal" style="background:#f0f0f0;">
+        <div class="modal-header">
+            <h3 id="detail-title">Activity Analysis</h3>
+            <span onclick="closeDetailModal()" class="close-btn">✕</span>
+        </div>
+        <div class="modal-content" style="padding:0;">
+            <div id="detail-map" style="height:250px; width:100%;"></div>
+            
+            <div style="padding:20px;">
+                <div class="card">
+                    <div class="stat-grid" style="grid-template-columns: repeat(2, 1fr); gap:15px; margin-bottom:15px;">
+                        <div><div class="stat-label">Distance</div><div class="stat-value" id="detail-dist">0.00 km</div></div>
+                        <div><div class="stat-label">Moving Time</div><div class="stat-value" id="detail-time">00:00</div></div>
+                        <div><div class="stat-label">Avg Pace</div><div class="stat-value" id="detail-pace">0:00 /km</div></div>
+                        <div><div class="stat-label">Elevation Gain</div><div class="stat-value" id="detail-elev">0 m</div></div>
+                    </div>
+                    <div style="border-top:1px solid #eee; padding-top:10px; font-size:0.9rem;">
+                        <span id="detail-shoe" style="color:var(--text-gray);"></span>
+                    </div>
+                </div>
+
+                <h3 class="section-title">Best Efforts</h3>
+                <div class="card" id="best-efforts-container">
+                    <p style="color:#999; font-size:0.9rem;">No GPS data available for analysis.</p>
+                </div>
+
+                <div style="margin-top:20px; display:flex; gap:10px;">
+                    <button onclick="openEditModal(currentDetailRunId)" class="btn-full" style="background:white; color:#333; border:1px solid #ddd; margin:0;">Edit</button>
+                    <button onclick="exportGPX(currentDetailRunId)" class="btn-full" style="background:#333; margin:0;">Export GPX</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div id="profile-modal" class="modal">
         <div class="modal-header">
@@ -84,10 +116,8 @@
         <div class="modal-content">
             <label>Name</label>
             <input type="text" id="edit-profile-name">
-            
             <label>Location</label>
             <input type="text" id="edit-profile-loc" placeholder="City, Country">
-            
             <button class="btn-full" onclick="saveProfileChanges()">Save Changes</button>
         </div>
     </div>
@@ -112,17 +142,6 @@
             <label>Shoe</label>
             <select id="save-shoe"></select>
             <button class="btn-full" onclick="confirmSave()">Save Activity</button>
-        </div>
-    </div>
-
-    <div id="map-modal" class="modal" style="height:100%;">
-        <div class="modal-header">
-            <h3>Route</h3>
-            <span onclick="document.getElementById('map-modal').style.display='none'" class="close-btn">✕</span>
-        </div>
-        <div id="history-map" style="flex:1; width:100%;"></div>
-        <div style="padding:15px; background:white; border-top:1px solid #ddd;">
-             <button onclick="exportGPX()" class="btn-full" style="margin:0; background:#333;">⬇ Export GPX File</button>
         </div>
     </div>
 
