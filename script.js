@@ -17,7 +17,6 @@ let isManualEntry = false;
 let editingRunId = null;
 let currentDetailRunId = null;
 
-// Distances to analyze (in meters)
 const bestEffortDistances = [
     { label: "400m", dist: 400 },
     { label: "1k", dist: 1000 },
@@ -58,16 +57,21 @@ function switchTab(tab) {
         document.getElementById('profile-view').style.display = 'block';
         document.getElementById('nav-profile').classList.add('active');
         document.getElementById('manual-add-btn').style.display = 'none';
-        loadProfileUI(); // This now calculates PRs too
+        loadProfileUI(); 
     }
 }
 
-// --- GPS Tracking ---
+// --- GPS Tracking (Dark Map) ---
 function initLiveMap() {
     if (mapInstance) return;
     mapInstance = L.map('live-map').setView([0, 0], 2);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(mapInstance);
-    polyline = L.polyline([], {color: '#fc4c02', weight: 5}).addTo(mapInstance);
+    // DARK MAP TILES
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
+        subdomains: 'abcd',
+        maxZoom: 19
+    }).addTo(mapInstance);
+    polyline = L.polyline([], {color: '#2979ff', weight: 5}).addTo(mapInstance);
 }
 
 function startRun() {
@@ -97,7 +101,7 @@ function startRun() {
                 pathCoordinates.push([lat, lng, alt, new Date().toISOString()]);
                 lastAltitude = alt;
                 mapInstance.setView([lat, lng], 16);
-                L.circleMarker([lat, lng], {radius: 6, color: 'green', fillOpacity: 1}).addTo(mapInstance);
+                L.circleMarker([lat, lng], {radius: 6, color: '#2979ff', fillOpacity: 1}).addTo(mapInstance);
             }
         }, 
         (err) => console.error(err), options
@@ -136,7 +140,6 @@ function toggleButtons(state) {
 function calculateBestEfforts(run) {
     if (!run.path || run.path.length < 2) return [];
 
-    // Pre-calculate cumulative distance
     let points = run.path.map(p => ({
         lat: p[0], lng: p[1], time: new Date(p[3]).getTime(), distSoFar: 0
     }));
@@ -151,11 +154,9 @@ function calculateBestEfforts(run) {
     let results = [];
     bestEffortDistances.forEach(target => {
         if (totalDist < target.dist) return; 
-
         let bestTimeMs = Infinity;
         let startIdx = 0;
         let endIdx = 0;
-
         while (endIdx < points.length) {
             const distCovered = points[endIdx].distSoFar - points[startIdx].distSoFar;
             if (distCovered >= target.dist) {
@@ -166,7 +167,6 @@ function calculateBestEfforts(run) {
                 endIdx++;
             }
         }
-
         if (bestTimeMs !== Infinity) {
             results.push({
                 label: target.label,
@@ -175,7 +175,6 @@ function calculateBestEfforts(run) {
             });
         }
     });
-
     return results;
 }
 
@@ -195,15 +194,15 @@ function openDetailModal(runId) {
     const shoe = profile.gear.find(g => g.id === run.shoeId);
     document.getElementById('detail-shoe').innerText = shoe ? `👟 ${shoe.name}` : "";
 
-    // Map
+    // Map (Dark)
     setTimeout(() => {
         if(detailMapInstance) { detailMapInstance.remove(); detailMapInstance = null; }
         detailMapInstance = L.map('detail-map');
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(detailMapInstance);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '© CARTO' }).addTo(detailMapInstance);
         
         if (run.path && run.path.length > 0) {
             const simplePath = run.path.map(p => [p[0], p[1]]);
-            const line = L.polyline(simplePath, {color:'#fc4c02', weight:5}).addTo(detailMapInstance);
+            const line = L.polyline(simplePath, {color:'#2979ff', weight:5}).addTo(detailMapInstance);
             detailMapInstance.fitBounds(line.getBounds());
         } else {
             detailMapInstance.setView([0,0], 1);
@@ -217,7 +216,7 @@ function openDetailModal(runId) {
     if (run.path && run.path.length > 0) {
         const efforts = calculateBestEfforts(run);
         if (efforts.length > 0) {
-            container.innerHTML = `<div class="effort-row" style="font-weight:bold; border-bottom:1px solid #ddd;"><div>Dist</div><div style="text-align:right">Time</div><div style="text-align:right">Pace</div></div>`;
+            container.innerHTML = `<div class="effort-row" style="font-weight:bold; border-bottom:1px solid #333; color:var(--text-sub);"><div>Dist</div><div style="text-align:right">Time</div><div style="text-align:right">Pace</div></div>`;
             efforts.forEach(e => {
                 container.innerHTML += `
                 <div class="effort-row">
@@ -227,16 +226,43 @@ function openDetailModal(runId) {
                 </div>`;
             });
         } else {
-            container.innerHTML = '<p style="padding:15px; color:#999; text-align:center;">Run too short for achievements.</p>';
+            container.innerHTML = '<p style="padding:15px; color:#555; text-align:center;">Run too short for achievements.</p>';
         }
     } else {
-        container.innerHTML = '<p style="padding:15px; color:#999; text-align:center;">Manual entry - no GPS data.</p>';
+        container.innerHTML = '<p style="padding:15px; color:#555; text-align:center;">Manual entry - no GPS data.</p>';
     }
 }
 
 function closeDetailModal() {
     document.getElementById('activity-detail-modal').style.display = 'none';
 }
+
+// --- NEW: DELETE RUN LOGIC ---
+function deleteRun(runId) {
+    if(!confirm("Are you sure you want to delete this activity? This cannot be undone.")) return;
+    
+    const runIndex = runs.findIndex(r => r.id === runId);
+    if(runIndex === -1) return;
+
+    // 1. Revert Shoe Mileage
+    const run = runs[runIndex];
+    const shoe = profile.gear.find(g => g.id === run.shoeId);
+    if(shoe) {
+        shoe.dist = Math.max(0, shoe.dist - run.distance);
+        saveProfile();
+    }
+
+    // 2. Remove Run
+    runs.splice(runIndex, 1);
+    localStorage.setItem('strava_runs_v3', JSON.stringify(runs));
+
+    // 3. UI Updates
+    closeDetailModal();
+    renderFeed();
+    updateStats();
+    loadProfileUI(); // Updates stats in profile view
+}
+
 
 // --- Data Saving & Editing ---
 function openManualEntry() {
@@ -277,8 +303,6 @@ function openEditModal(runId) {
     document.getElementById('save-dist-display').style.display = 'block';
     document.getElementById('save-dist-display').innerText = run.distance.toFixed(2) + " km";
     document.getElementById('manual-fields').style.display = 'none';
-    
-    // Close detail if open to avoid stacking weirdness
     if (document.getElementById('activity-detail-modal').style.display === 'flex') {
         closeDetailModal();
     }
@@ -315,7 +339,6 @@ function confirmSave() {
             localStorage.setItem('strava_runs_v3', JSON.stringify(runs));
             closeSaveModal(); 
             renderFeed(); 
-            // If we were editing from detail view, re-open it to show changes
             if(currentDetailRunId === editingRunId) openDetailModal(editingRunId);
             editingRunId = null;
             return;
@@ -360,13 +383,13 @@ function resetTracker() {
 function renderFeed() {
     const container = document.getElementById('feed-container');
     container.innerHTML = '';
-    if (runs.length === 0) return container.innerHTML = '<p style="text-align:center; padding:20px; color:#999;">No activities yet.</p>';
+    if (runs.length === 0) return container.innerHTML = '<p style="text-align:center; padding:20px; color:#555;">No activities yet.</p>';
 
     runs.forEach(run => {
         const date = new Date(run.date).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
         
         let html = `
-        <div class="activity" onclick="openDetailModal(${run.id})" style="cursor:pointer; padding:15px; margin-bottom:10px; background:white; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+        <div class="activity" onclick="openDetailModal(${run.id})" style="cursor:pointer; padding:15px; margin-bottom:10px; background:var(--bg-card); border-radius:12px; border:1px solid var(--border);">
             <div class="btn-edit-activity" onclick="event.stopPropagation(); openEditModal(${run.id})">✎</div>
             
             <div class="user-header">
@@ -374,11 +397,11 @@ function renderFeed() {
                      ${profile.photo ? `<img src="${profile.photo}">` : profile.name.charAt(0)}
                 </div>
                 <div>
-                    <h3 style="font-size:0.95rem;">${profile.name}</h3>
-                    <span style="font-size:0.75rem; color:gray;">${date}</span>
+                    <h3 style="font-size:1rem; font-weight:800; color:var(--text-main);">${profile.name}</h3>
+                    <span style="font-size:0.75rem; color:var(--text-sub);">${date}</span>
                 </div>
             </div>
-            <h2 style="font-size:1.1rem; margin-top:5px;">${run.title}</h2>
+            <h2 style="font-size:1.1rem; margin-top:10px; font-weight:bold; color:var(--text-main);">${run.title}</h2>
             <div class="run-stats">
                 <div class="run-stat"><label>Dist</label>${run.distance.toFixed(2)} km</div>
                 <div class="run-stat"><label>Pace</label>${formatTime(run.seconds/run.distance, true)} /km</div>
@@ -420,21 +443,17 @@ function loadProfileUI() {
     document.getElementById('all-time-km').innerText = d.toFixed(1);
     document.getElementById('all-time-runs').innerText = runs.length;
     
-    // Gear
     const container = document.getElementById('gear-container');
     container.innerHTML = '';
     profile.gear.forEach(shoe => {
-        container.innerHTML += `<div class="gear-item"><div class="gear-icon">👟</div><div style="flex:1;"><div style="font-weight:bold;">${shoe.name}</div><div style="color:var(--text-gray); font-size:0.9rem;">${shoe.dist.toFixed(1)} km</div></div></div>`;
+        container.innerHTML += `<div class="gear-item"><div class="gear-icon">👟</div><div style="flex:1;"><div style="font-weight:bold; color:var(--text-main);">${shoe.name}</div><div style="color:var(--text-sub); font-size:0.9rem;">${shoe.dist.toFixed(1)} km</div></div></div>`;
     });
 
-    // CALCULATE PERSONAL RECORDS
+    // PRS
     const prContainer = document.getElementById('pr-container');
     prContainer.innerHTML = '';
-    
-    let bests = {}; // { "1k": { time: 100, date: '...' } }
-
+    let bests = {};
     runs.forEach(run => {
-        // Only calculate for runs with GPS data
         if(run.path && run.path.length > 0) {
             const efforts = calculateBestEfforts(run);
             efforts.forEach(e => {
@@ -444,10 +463,8 @@ function loadProfileUI() {
             });
         }
     });
-
     const labelsOrder = bestEffortDistances.map(d => d.label);
     let hasPrs = false;
-
     labelsOrder.forEach(label => {
         if(bests[label]) {
             hasPrs = true;
@@ -457,12 +474,11 @@ function loadProfileUI() {
             <div class="effort-row">
                 <div style="font-weight:bold;">${label}</div>
                 <div style="text-align:right; font-weight:600;">${formatTime(rec.timeSeconds)}</div>
-                <div style="text-align:right; font-size:0.8rem; color:#888;">${dateStr}</div>
+                <div style="text-align:right; font-size:0.8rem; color:var(--text-sub);">${dateStr}</div>
             </div>`;
         }
     });
-
-    if(!hasPrs) prContainer.innerHTML = '<p style="text-align:center; color:#999; padding:10px;">No GPS records yet.</p>';
+    if(!hasPrs) prContainer.innerHTML = '<p style="text-align:center; color:#555; padding:10px;">No GPS records yet.</p>';
 }
 
 function openProfileModal() {

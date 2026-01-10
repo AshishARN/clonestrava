@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RunStrava Solo</title>
+    <title>Solo Runner</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <header>
-        <h1>RunStrava</h1>
+        <h1>Solo Runner</h1>
         <div class="header-btn-right" id="manual-add-btn" onclick="openManualEntry()">+</div>
     </header>
 
@@ -25,7 +25,7 @@
         </div>
 
         <h3 class="section-title">History</h3>
-        <div id="feed-container" class="card" style="background:transparent; box-shadow:none; padding:0;"></div>
+        <div id="feed-container" class="card" style="background:transparent; box-shadow:none; padding:0; border:none;"></div>
     </main>
 
     <div id="tracker-view">
@@ -69,7 +69,7 @@
 
         <h3 class="section-title">Personal Records</h3>
         <div class="card" id="pr-container">
-            <p style="text-align:center; color:#999; font-size:0.9rem;">No records yet.</p>
+            <p style="text-align:center; color:#555; font-size:0.9rem;">No records yet.</p>
         </div>
 
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
@@ -81,33 +81,36 @@
         <button onclick="resetData()" class="btn-danger">Reset All Data</button>
     </main>
 
-    <div id="activity-detail-modal" class="modal" style="background:#f0f0f0;">
+    <div id="activity-detail-modal" class="modal">
         <div class="modal-header">
-            <h3 id="detail-title">Activity Analysis</h3>
+            <h3 id="detail-title">Analysis</h3>
             <span onclick="closeDetailModal()" class="close-btn">✕</span>
         </div>
         <div class="modal-content" style="padding:0;">
-            <div id="detail-map" style="height:300px; width:100%;"></div>
+            <div id="detail-map" style="height:350px; width:100%; background:#000;"></div>
             
             <div style="padding:20px;">
                 <div class="card">
                     <div class="stat-grid" style="grid-template-columns: repeat(2, 1fr); gap:15px; margin-bottom:15px;">
                         <div><div class="stat-label">Distance</div><div class="stat-value" id="detail-dist">0.00 km</div></div>
-                        <div><div class="stat-label">Moving Time</div><div class="stat-value" id="detail-time">00:00</div></div>
+                        <div><div class="stat-label">Time</div><div class="stat-value" id="detail-time">00:00</div></div>
                         <div><div class="stat-label">Avg Pace</div><div class="stat-value" id="detail-pace">0:00 /km</div></div>
-                        <div><div class="stat-label">Elevation Gain</div><div class="stat-value" id="detail-elev">0 m</div></div>
+                        <div><div class="stat-label">Elev Gain</div><div class="stat-value" id="detail-elev">0 m</div></div>
                     </div>
-                    <div style="border-top:1px solid #eee; padding-top:10px; font-size:0.9rem;">
-                        <span id="detail-shoe" style="color:var(--text-gray);"></span>
+                    <div style="border-top:1px solid #333; padding-top:10px; font-size:0.9rem;">
+                        <span id="detail-shoe" style="color:var(--primary);"></span>
                     </div>
                 </div>
 
-                <h3 class="section-title">Best Efforts (This Run)</h3>
+                <h3 class="section-title">Best Efforts</h3>
                 <div class="card" id="best-efforts-container"></div>
 
-                <div style="margin-top:20px; display:flex; gap:10px;">
-                    <button onclick="openEditModal(currentDetailRunId)" class="btn-full" style="background:white; color:#333; border:1px solid #ddd; margin:0;">Edit</button>
-                    <button onclick="exportGPX(currentDetailRunId)" class="btn-full" style="background:#333; margin:0;">Export GPX</button>
+                <div style="margin-top:20px; display:flex; flex-direction:column; gap:10px;">
+                    <div style="display:flex; gap:10px;">
+                        <button onclick="openEditModal(currentDetailRunId)" class="btn-full" style="background:var(--bg-card); border:1px solid var(--border); color:var(--text-main); margin:0;">Edit</button>
+                        <button onclick="exportGPX(currentDetailRunId)" class="btn-full" style="background:var(--bg-card); border:1px solid var(--border); color:var(--text-main); margin:0;">GPX</button>
+                    </div>
+                    <button onclick="deleteRun(currentDetailRunId)" class="btn-full" style="background:rgba(255, 82, 82, 0.2); color:#ff5252; border:1px solid #ff5252; margin:0;">Delete Activity</button>
                 </div>
             </div>
         </div>
